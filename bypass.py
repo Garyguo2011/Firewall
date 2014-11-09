@@ -27,6 +27,8 @@ class Firewall:
 
         print '%s len=%4dB, IPID=%5d  %15s -> %15s' % (dir_str, len(pkt), ipid,
                 socket.inet_ntoa(src_ip), socket.inet_ntoa(dst_ip))
+        print type(pkt)
+        # print (pkt)
 
         # ... and simply allow the packet.
         if pkt_dir == PKT_DIR_INCOMING:
