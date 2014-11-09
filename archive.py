@@ -1,4 +1,5 @@
 from rulesPool import Rule
+
 ################### Infrastructure ####################
 class MatchRulesPool(object):
 	def __init__(self):
@@ -28,6 +29,11 @@ class Archive(object):
 		self.packet           # Exact packet (i.e. str version of original packet)
 		self.matchRules = RulePool()
 
+	def __str__(self):
+		return ""
+		# implement for debugging purpose
+
+
 ################### Transport layer ####################
 class TCPArchive (Archive):
 	def __init__(self, pkt_dir, pkt):
@@ -53,7 +59,7 @@ class ICMPArchive (Archive):
 
 ################### Application layer ####################
 class DNSArchive(UDPArchive):
-	def __init__(self, ....):
+	def __init__(self, pkt_dir, pkt):
 		# DNSArchieve build on top of UDPArchive
 		self.app = "dns"
 		self.domainName
