@@ -40,25 +40,25 @@ class Firewall:
         print type(pkt)
         # print (pkt)
 
-        archive = self.packet_allocator(pkt_dir, pkt, src_ip, dst_ip)
+        archive = self.packet_allocator(pkt_dir, pkt)
 
         # ... and simply allow the packet.
         self.default_allow(pkt_dir, pkt)
 
-    def packet_allocator(self, pkt_dir, pkt, src_ip, dst_ip):
+    def packet_allocator(self, pkt_dir, pkt):
         protocolNumber = ord(pkt[9:10]) # parse pkt and get protocol
         if protocolNumber == TCP_PROTOCOL_NUM:
-            return TCPArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
-        elif protocolNumber == UDP_PROTOCOL_NUM:
+            return TCPArchive(pkt_dir, pkt, protocolNumber)
+        elif protocolNumber == UDP UDP_PROTOCOL_NUM:
             if is_DNS_query_packet(pkt_dir, pkt):
-                return DNSArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
+                return DNSArchive(pkt_dir, pkt, protocolNumber)
             else
-                return UDPArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
+                return UDPArchive(pkt_dir, pkt, protocolNumber)
         elif protocolNumber == ICMP_PROTOCOL_NUM:
-            return ICMPArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
+            return ICMPArchive(pkt_dir, pkt, protocolNumber)
         else:
             self.default_allow(pkt_dir, pkt)
- 	    return None	
+            return None
 
     def default_allow(self, pkt_dir, pkt):
         if pkt_dir == PKT_DIR_INCOMING:
