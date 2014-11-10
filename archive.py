@@ -5,22 +5,6 @@ import socket
 import struct
 import time
 
-################### Infrastructure ####################
-class MatchRulesPool(object):
-	def __init__(self):
-		self.pool = []
-
-	def add (self, rule):
-		if type(rule) is Rule:
-			self.pool.append(rule.getIndex(), rule.getVerdict())
-
-	def isPass(self):
-
-	def size(self):
-		return len(self.pool)
-
-	def isEmpty(self):
-		return len(self.pool) == 0
 
 ################### IP layer ####################
 class Archive(object):
@@ -35,7 +19,7 @@ class Archive(object):
 			self.externalIP = dst_ip
 		self.countryCode = countryCodeDictionary.lookup(externalIP)      # need look up CountryCodeDirectionary
 		self.packet = pkt           # Exact packet (i.e. str version of original packet)
-		self.matchRules = RulePool()
+		self.verdict = True
 
 	def __str__(self):
 		return ""
