@@ -5,6 +5,22 @@ import socket
 import struct
 import time
 
+################### Infrastructure ####################
+class MatchRulesPool(object):
+	def __init__(self):
+		self.pool = []
+
+	def add (self, rule):
+		if type(rule) is Rule:
+			self.pool.append(rule.getIndex(), rule.getVerdict())
+
+	def isPass(self):
+
+	def size(self):
+		return len(self.pool)
+
+	def isEmpty(self):
+		return len(self.pool) == 0
 
 ################### IP layer ####################
 class Archive(object):
@@ -19,7 +35,7 @@ class Archive(object):
 			self.externalIP = dst_ip
 		self.countryCode = countryCodeDictionary.lookup(externalIP)      # need look up CountryCodeDirectionary
 		self.packet = pkt           # Exact packet (i.e. str version of original packet)
-		self.verdict = True
+		self.matchRules = RulePool()
 
 	def __str__(self):
 		return ""
@@ -28,37 +44,31 @@ class Archive(object):
 
 ################### Transport layer ####################
 class TCPArchive (Archive):
-	def __init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip):
+	def __init__(self, pkt_dir, pkt):
 		# Packet is String Type
 		# Need to implement TCP parsing rule
-		if pkt_dir = PKT_DIR_INCOMING:
-			self.externalPort = struct.unpack('!H', pkt[20:22])
-		else:
-			self.externalPort = struct.unpack('!H', pkt[22:24])
-		Archive.__init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip)
+		self.externalPort
+		Archive.__init__(self, pkt_dir, pkt)
 		
 class UDPArchive (Archive):
-	def __init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip):
+	def __init__(self, pkt_dir, pkt):
 		# Packet is String Type
 		# Need to implement UDP parsing rule
-		if pkt_dir = PKT_DIR_INCOMING:
-			self.externalPort = struct.unpack('!H', pkt[20:22])
-		else:
-			self.externalPort = struct.unpack('!H', pkt[22:24])
-		Archive.__init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip):
+		self.externalPort
+		Archive.__init__(self, pkt_dir, pkt)
 		
 class ICMPArchive (Archive):
-	def __init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip):
+	def __init__(self, pkt_dir, pkt):
 		# Packet is String Type
 		# Need to implement UDP parsing rule
 		# ICMP has type field
-		self.type = ord(pkt[20:21])
-		Archive.__init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip)
+		self.type
+		Archive.__init__(self, pkt_dir, pkt)
 
 ################### Application layer ####################
 class DNSArchive(UDPArchive):
-	def __init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip):
+	def __init__(self, pkt_dir, pkt):
 		# DNSArchieve build on top of UDPArchive
 		self.app = "dns"
-		self.domainName = 
-		UDPArchive.__init__(self, pkt_dir, pkt, protocol, src_ip, dst_ip)
+		self.domainName
+		UDPArchive.__init__(self, pkt_dir, pkt)
