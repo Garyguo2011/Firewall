@@ -24,41 +24,43 @@ class Firewall:
         # construct a CountryCodeDict
         
     def handle_packet(self, pkt_dir, pkt):
-        # The example code here prints out the source/destination IP addresses,
-        # which is unnecessary for your submission.
-        src_ip = pkt[12:16]
+
         dst_ip = pkt[16:20]
-        ipid, = struct.unpack('!H', pkt[4:6])    # IP identifier (big endian)
         
-        if pkt_dir == PKT_DIR_INCOMING:
-            dir_str = 'incoming'
+        
+        archive = self.packet_allocator(pkt_dir, pkt)
+        if archive:
+
         else:
-            dir_str = 'outgoing'
+        #    ... and simply allow the packet.
+            self.default_allow(pkt_dir, pkt)
 
-        print '%s len=%4dB, IPID=%5d  %15s -> %15s' % (dir_str, len(pkt), ipid,
-                socket.inet_ntoa(src_ip), socket.inet_ntoa(dst_ip))
-        print type(pkt)
-        # print (pkt)
-
-        archive = self.packet_allocator(pkt_dir, pkt, src_ip, dst_ip)
-
-        # ... and simply allow the packet.
-        self.default_allow(pkt_dir, pkt)
-
-    def packet_allocator(self, pkt_dir, pkt, src_ip, dst_ip):
+    def packet_allocator(self, pkt_dir, pkt):
         protocolNumber = ord(pkt[9:10]) # parse pkt and get protocol
         if protocolNumber == TCP_PROTOCOL_NUM:
-            return TCPArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
+            return TCPArchive(pkt_dir, pkt)
         elif protocolNumber == UDP_PROTOCOL_NUM:
             if is_DNS_query_packet(pkt_dir, pkt):
-                return DNSArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
+                return DNSArchive(pkt_dir, pkt)
             else
-                return UDPArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
+                return UDPArchive(pkt_dir, pkt)
         elif protocolNumber == ICMP_PROTOCOL_NUM:
-            return ICMPArchive(pkt_dir, pkt, protocolNumber, src_ip, dst_ip)
+            return ICMPArchive(pkt_dir, pkt)
         else:
             self.default_allow(pkt_dir, pkt)
- 	    return None	
+            return None	
+
+    def is_DNS_query_packet(self, pkt_dir, pkt):
+        ipLength = (15 & ord(pkt[0:1])) * 4
+        dst_port = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])
+        qdcount = struct.unpack('!H', pkt[(ipLength + 12):(ipLength + 14)])
+        qNameLength = self.getQNameLength(pkt_dir, pkt)
+        qtype = struct.unpack('!H', pkt[(ipLength + 20 + qNameLength):(ipLength + 22 + qNameLength)])
+        qclass = struct.unpack('!H', pkt[(ipLength + 22 + qNameLength):(ipLength + 24 + qNameLength)])
+        if pkt_dir == PKT_DIR_OUTGOING and qdcount == 1 and qclass == 1:
+            if qtype == 1 or qtype ==28:
+                return True
+        return False
 
     def default_allow(self, pkt_dir, pkt):
         if pkt_dir == PKT_DIR_INCOMING:
@@ -66,5 +68,14 @@ class Firewall:
         elif pkt_dir == PKT_DIR_OUTGOING:
             self.iface_ext.send_ip_packet(pkt)
 
-    def is_DNS_query_packet(self, pkt_dir, pkt):
-        pass
+    def getQNameLength(self, pkt_dir, pkt):
+        ipLength = (15 & ord(pkt[0:1])) * 4
+        countByte = 0
+        indicator = ord(pkt[(ipLength + 20):(ipLength + 21)])
+        while (indicator != 0):
+            countByte = indicator + countByte + 1
+            indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
+        countByte += 1
+        return countByte
+
+
