@@ -7,9 +7,9 @@ import struct
 import time
 
 # Later move to firewall.py
-TCP_PROTOCOL_NUM = 1
+TCP_PROTOCOL_NUM = 6
 UDP_PROTOCOL_NUM = 17
-ICMP_PROTOCOL_NUM = 50
+ICMP_PROTOCOL_NUM = 1
 
 # Import from archive.py
 from archive import TCPArchive, UDPArchive, ICMPArchive, DNSArchive
