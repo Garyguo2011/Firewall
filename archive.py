@@ -102,5 +102,6 @@ class DNSArchive(UDPArchive):
 			indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
 			if (indicator != 0):
 				domainName = domainName + '.'
+
 		return domainName
 
