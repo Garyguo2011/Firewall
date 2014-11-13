@@ -12,7 +12,7 @@ PASS = True
 DROP = False
 MAX_PORTNUM = 65535
 DEFAULT_POLICY = PASS
-DEBUG = False
+DEBUG = True
 
 # Rule Interface [important: have to implement matches function]
 class Rule(object):
@@ -40,8 +40,7 @@ class Rule(object):
         pass
 
 class GeneralRule(Rule):        # Protocol/IP/Port Rules
-    def __init__(self, ruleStr):
-        fieldList = ruleStr.lower().split("%")[0].split("\n")[0].split()
+    def __init__(self, fieldList):
         assert len(fieldList) == 4 and (fieldList[1] == TCP_PROTOCOL or fieldList[1] == UDP_PROTOCOL or fieldList[1] == ICMP_PROTOCOL), "[ERROR] %r is no Proper General Rule"
         Rule.__init__(self, fieldList[0])
         self.protocol = fieldList[1]
@@ -75,8 +74,12 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
 
     def ip_str_to_int(self, ipStr):
         fieldList = ipStr.split(".")
+        print(ipStr)
+        print(fieldList)
         if len (fieldList) == 4:
-            return int(fieldList[0]) << 24 | int(fieldList[1]) << 16 | int(fieldList[2]) << 8 | int(fieldList[3])
+            result = (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
+            print(result)
+            return (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
         else:
             print ("Syntax Error: " + ipStr)
 
@@ -91,33 +94,37 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
         else:
             print("Syntax Error: " + inputStr)
 
-    # def matches (self, archive):
-    #     if self.protocol_matches(archive) and self.external_ip_matches(archive) and \
-    #        self.countrycode_matches(archive) and self.external_port_matches(archive):
-    #         return self.Verdict
-    #     else:
-    #         return DEFAULT_POLICY
+    def matches (self, archive):
+        if self.protocol_matches(archive) and self.external_ip_matches(archive) and \
+           self.countrycode_matches(archive) and self.external_port_matches(archive):
+            return self.Verdict
+        else:
+            return DEFAULT_POLICY
 
-    # def protocol_matches(self, archive):
-    #     self.protocol == archive.getProtocol()
+    def protocol_matches(self, archive):
+        self.protocol == archive.getProtocol()
 
-    # def external_ip_matches(self, archive):
-    #     if self.ipPrefixContent != None:
-    #         return ((archive.getExternalIP() >> (32 - self.ipPrefixContent[1])) ^ \
-    #                (self.ipPrefixContent[0] >> (32 - self.ipPrefixContent[1]))) == 0
-    #     else:
-    #         return True
-    #         # Return True to pass skip this test because it is not ip prefix
+    def external_ip_matches(self, archive):
+        if self.ipPrefixContent != None:
+            return ((archive.getExternalIP() >> (32 - self.ipPrefixContent[1])) ^ \
+                   (self.ipPrefixContent[0] >> (32 - self.ipPrefixContent[1]))) == 0
+        else:
+            return True
+            # Return True to pass skip this test because it is not ip prefix
 
-    # def countrycode_matches(self, archive):
-    #     if self.countryCode != None:
-    #         return self.countryCode == archive.getCountryCode()
-    #     else:
-    #         return True
-    #         # Return True to pass skip this test because it is ip prefix
+    def countrycode_matches(self, archive):
+        if self.countryCode != None:
+            return self.countryCode == archive.getCountryCode()
+        else:
+            return True
+            # Return True to pass skip this test because it is ip prefix
 
-    # def external_port_matches(self, archive):
-    #     return self.externalPortRange[0] <= archive.getExternalPort() and archive.getExternalPort() <= self.externalPortRange[1]
+    def external_port_matches(self, archive):
+        if type(archive) == ICMPArchive:
+            cmpData = archive.getType()
+        else:
+            cmpData = archive.getExternalPort()
+        return self.externalPortRange[0] <= cmpData and cmpData <= self.externalPortRange[1]
 
     def __str__(self):
         ipPrefixContent_str = str(self.ipPrefixContent)
@@ -126,10 +133,10 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
                 ipPrefixContent_str = "any"
             else:
                 ipStrList = []
-                ipStrList.append((self.ipPrefixContent[0] >> 24) & 15)
-                ipStrList.append((self.ipPrefixContent[0] >> 16) & 15)
-                ipStrList.append((self.ipPrefixContent[0] >> 8) & 15)
-                ipStrList.append((self.ipPrefixContent[0] >> 0) & 15)
+                ipStrList.append((self.ipPrefixContent[0] >> 24) & 255)
+                ipStrList.append((self.ipPrefixContent[0] >> 16) & 255)
+                ipStrList.append((self.ipPrefixContent[0] >> 8) & 255)
+                ipStrList.append((self.ipPrefixContent[0] >> 0) & 255)
                 if self.ipPrefixContent[1] == 32:
                     ipPrefixContent_str = "%d.%d.%d.%d" % (ipStrList[0], ipStrList[1], ipStrList[2], ipStrList[3])    
                 else:
@@ -154,14 +161,11 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
 ###############################################################################################
 # Unit of Rules
 class DNSRule(Rule):
-    def __init__(self, ruleStr):
-        # ruleStr is type String need to parsing
-        # Need DNS Rule parsing
-        fieldList = ruleStr.lower().split("%")[0].split("\n")[0].split()
+    def __init__(self, fieldList):
         assert len(fieldList) == 3 and fieldList[1] == "dns", "[ERROR]: '%r' is not DNS Rule"
         Rule.__init__(self, fieldList[0])                # Set up Verdict
         self.app = fieldList[1]
-        
+
         domainStr = fieldList[2]
         if len(domainStr) == 0:
             print("Parse Error: DNS Don't have domainStr")
@@ -175,23 +179,23 @@ class DNSRule(Rule):
             self.isPostfix = False
             self.postfix = domainStr
 
-    # def matches (self, archive):
-    #     if type(archive) == DNSArchive:
-    #         return self.app_matches(archive) and self.domain_matches(archive)
-    #     else:
-    #         return DEFAULT_POLICY
+    def matches (self, archive):
+        if type(archive) == DNSArchive:
+            return self.app_matches(archive) and self.domain_matches(archive)
+        else:
+            return DEFAULT_POLICY
 
-    # def app_matches(self, archive):
-    #     return self.app == archive.getApp()
+    def app_matches(self, archive):
+        return self.app == archive.getApp()
 
-    # def domain_matches(self, archive):
-    #     if self.isPostfix:
-    #         for i in range(0, len(archive.getDomainName())):
-    #             if archive.getDomainName()[i:] == self.postfix:
-    #                 return True
-    #         return False
-    #     else:
-    #         return archive.getDomainName() == self.postfix
+    def domain_matches(self, archive):
+        if self.isPostfix:
+            for i in range(0, len(archive.getDomainName())):
+                if archive.getDomainName()[i:] == self.postfix:
+                    return True
+            return False
+        else:
+            return archive.getDomainName() == self.postfix
 
     def __str__(self):
         postfix_str = str(self.postfix)
@@ -202,47 +206,7 @@ class DNSRule(Rule):
         else:
             return Rule.__str__(self) +  " %s %s" % (self.app, postfix_str)
 
-# Important: we have already make sure what protocol is before pass into constructor
-# class ICMPRule(GeneralRule):
-#     def __init__(self, ruleStr):
-#         # ruleStr is type String need to parsing
-#         # Need ICMP Rule parsing
-#         fieldList = buf.lower().split(" ")
-#         assert len(fieldList) == 3 and fieldList[1] == "icmp", "[ERROR]: '%r' is not icmp Rule"
-#         self.type 
-#         protocol = "icmp"
-#         GeneralRule.__init__(self, index, verdict, protocol, isIPPrefix, ipNum, ipPrefixNum, countryCode)
-
-#     def __str__(self):
-#         return "[ICMPRule]:" + GeneralRule.__str__(self) + "type: %s" % (self.type)
-
-# class UDPRule(GeneralRule):
-#     def __init__(self, ruleStr):
-#         # ruleStr is type String need to parsing
-#         # Need UDP Rule parsing
-#         self.lowerBound
-#         self.upperBound       # single number a =  range(a, a)
-#         protocol = "udp"
-#         GeneralRule.__init__(self, index, verdict, protocol, isIPPrefix, ipNum, ipPrefixNum, countryCode)
-
-#     def __str__(self):
-#         return "[UDPRule]:" + GeneralRule.__str__(self) + "PortRange[%d, %d]" % (self.exPortLower, self.exportUpper)
-
-# class TCPRule(GeneralRule):
-#     def __init__(self, ruleStr):
-#         # ruleStr is type String need to parsing
-#         # Need TCP Rule parsing
-#         self.exPortLower
-#         self.exportUpper
-#         protocol = "tcp"
-#         GeneralRule.__init__(self, index, verdict, protocol, isIPPrefix, ipNum, ipPrefixNum, countryCode)
-
-#     def __str__(self):
-#         return "[UDPRule]:" + GeneralRule.__str__(self) + "PortRange[%d, %d]" % (self.exPortLower, self.exportUpper)
-
-###############################################################################################
 # static rules pool and matching rules pool
-
 class StaticRulesPool(object):
     def __init__(self, conffile):
         self.rule_list = []
@@ -260,18 +224,17 @@ class StaticRulesPool(object):
     def parseBuffer (self, buf):
         if buf == None or len(buf) == 0 or buf[0] == '%' or buf[0] == '\n':
             return None
+        fieldList = buf.lower().split("%")[0].split("\n")[0].split()
+        if len(fieldList) == 0:
+            return None
+        assert (len(fieldList) == 3 or len(fieldList) == 4), "%r contains some syntax error"
+        ruleType = fieldList[1]
+        if ruleType == ICMP_PROTOCOL or ruleType == UDP_PROTOCOL or ruleType == TCP_PROTOCOL:
+            return GeneralRule(fieldList)
+        elif ruleType == DNS_APP:
+            return DNSRule(fieldList)
         else:
-             # add more parsing logic and
-            # Important: Case Insensitivie need something like tolower()
-            fieldList = buf.lower().split("%")[0].split("\n")[0].split()
-            assert (len(fieldList) == 3 or len(fieldList) == 4), "%r contains some syntax error"
-            ruleType = fieldList[1]
-            if ruleType == ICMP_PROTOCOL or ruleType == UDP_PROTOCOL or ruleType == TCP_PROTOCOL:
-                return GeneralRule(buf)
-            elif ruleType == DNS_APP:
-                return DNSRule(buf)
-            else:
-                return None
+            return None
     
     def add(self, rule):
         if type(rule) in [GeneralRule, DNSRule]:

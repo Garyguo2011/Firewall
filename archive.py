@@ -20,13 +20,12 @@ class Archive(object):
 			dst_ip = pkt[16:20]
 			self.externalIP = dst_ip
 		self.countryCode = countryCodeDictionary.lookup(externalIP)      # need look up CountryCodeDirectionary
-		self.packet = pkt           # Exact packet (i.e. str version of original packet)
+		self.packet = pkt                                                # Exact packet (i.e. str version of original packet)
 		self.verdict = True
 
 	def __str__(self):
 		return ""
 		# implement for debugging purpose
-
 
 ################### Transport layer ####################
 class TCPArchive (Archive):
