@@ -19,6 +19,7 @@ class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
+        self.countryCodeDict = CountryCodeDict('geoipdb.txt')
 
         print 'bypass Phase 1 mode!'
         # construct a CountryCodeDict
@@ -29,11 +30,9 @@ class Firewall:
         
         
         archive = self.packet_allocator(pkt_dir, pkt)
-        if archive:
 
-        else:
         #    ... and simply allow the packet.
-            self.default_allow(pkt_dir, pkt)
+        self.default_allow(pkt_dir, pkt)
 
     def packet_allocator(self, pkt_dir, pkt):
         protocolNumber = ord(pkt[9:10]) # parse pkt and get protocol
@@ -42,7 +41,7 @@ class Firewall:
         elif protocolNumber == UDP_PROTOCOL_NUM:
             if is_DNS_query_packet(pkt_dir, pkt):
                 return DNSArchive(pkt_dir, pkt)
-            else
+            else:
                 return UDPArchive(pkt_dir, pkt)
         elif protocolNumber == ICMP_PROTOCOL_NUM:
             return ICMPArchive(pkt_dir, pkt)

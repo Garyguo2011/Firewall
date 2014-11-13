@@ -1,5 +1,5 @@
-from rulesPool import Rule
-from countryCodeDirectionary import *
+# from rulesPool import Rule
+from countryCodeDict import CountryCodeDict
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 import socket
 import struct
@@ -12,8 +12,8 @@ class Archive(object):
 		# IPv4 parsing rule need here
 		# In another word, All of Archive has IP Header
 		self.direction = pkt_dir
-		self.protocol = protocol
-		if pkt_dir = PKT_DIR_INCOMING:
+		self.protocol = ord(pkt[9:10])
+		if pkt_dir == PKT_DIR_INCOMING:
 			src_ip = pkt[12:16]
 			self.externalIP = src_ip       #IP store as number
 		else:
@@ -34,7 +34,7 @@ class TCPArchive (Archive):
 		# Packet is String Type
 		# Need to implement TCP parsing rule
 		ipLength = (15 & ord(pkt[0:1])) * 4
-		if pkt_dir = PKT_DIR_INCOMING:
+		if pkt_dir == PKT_DIR_INCOMING:
 			self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])
 		else:
 			self.externalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])
@@ -45,11 +45,11 @@ class UDPArchive (Archive):
 		# Packet is String Type
 		# Need to implement UDP parsing rule
 		ipLength = (15 & ord(pkt[0:1])) * 4
-		if pkt_dir = PKT_DIR_INCOMING:
+		if pkt_dir == PKT_DIR_INCOMING:
 			self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])
 		else:
 			self.externalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])
-		Archive.__init__(self, pkt_dir, pkt):
+		Archive.__init__(self, pkt_dir, pkt)
 		
 class ICMPArchive (Archive):
 	def __init__(self, pkt_dir, pkt):
@@ -79,10 +79,10 @@ class DNSArchive(UDPArchive):
 				elem = chr(elemInt)
 				domainName = domainName + elem
 			countByte = indicator + countByte + 1
-            indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
-            if (indicator != 0):
-            	domainName = domainName + '.'
-        return domainName
+			indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
+        	if (indicator != 0):
+        		domainName = domainName + '.'
+		return domainName
 
 
 
