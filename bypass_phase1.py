@@ -58,7 +58,7 @@ class Firewall:
         qdcount = struct.unpack('!H', pkt[(ipLength + 12):(ipLength + 14)])[0]
         qNameLength = self.getQNameLength(pkt_dir, pkt)
         qtype = struct.unpack('!H', pkt[(ipLength + 20 + qNameLength):(ipLength + 22 + qNameLength)])[0]
-        qclass = struct.unpack('!H', pkt[(ipLength + 22 + qNameLength):(ipLength + 24 + qNameLength)])[]
+        qclass = struct.unpack('!H', pkt[(ipLength + 22 + qNameLength):(ipLength + 24 + qNameLength)])[0]
         print str(dst_port)
         print str(qdcount)
         if pkt_dir == PKT_DIR_OUTGOING and dst_port == 53 and qdcount == 1 and qclass == 1:
