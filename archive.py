@@ -84,13 +84,3 @@ class DNSArchive(UDPArchive):
         		domainName = domainName + '.'
 		return domainName
 
-
-
-
-
-
-
-
-
-
-
