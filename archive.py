@@ -6,25 +6,44 @@ import struct
 import time
 
 
+TCP_PROTOCOL = "tcp"
+UDP_PROTOCOL = "udp"
+ICMP_PROTOCOL = "icmp"
+DNS_APP = "dns"
+LETTER = "abcdefghijklmnopqrstuvwxyz"
+ANY = "any"
+PASS_STR = "pass"
+DROP_STR = "drop"
+PASS = True
+DROP = False
+MAX_PORTNUM = 65535
+DEFAULT_POLICY = PASS
+DEBUG = False
+
 ################### IP layer ####################
 class Archive(object):
 	def __init__(self, pkt_dir, pkt):
 		# IPv4 parsing rule need here
 		# In another word, All of Archive has IP Header
 		self.direction = pkt_dir
-		self.protocol = ord(pkt[9:10])
+		protocolInt = ord(pkt[9:10])
+		if protocolInt == 1:
+			self.protocol = ICMP_PROTOCOL
+		elif protocolInt == 6:
+			self.protocol = TCP_PROTOCOL
+		elif protocolInt == 17:
+			self.protocol = UDP_PROTOCOL
 		if pkt_dir == PKT_DIR_INCOMING:
 			src_ip = pkt[12:16]
 			self.externalIP = src_ip       #IP store as number
 		else:
 			dst_ip = pkt[16:20]
 			self.externalIP = dst_ip
-		self.countryCode = countryCodeDictionary.lookup(externalIP)      # need look up CountryCodeDirectionary
+		# self.countryCode = countryCodeDict.lookup(externalIP)      # need look up CountryCodeDirectionary
 		self.packet = pkt           # Exact packet (i.e. str version of original packet)
 		self.verdict = True
 
-	def __str__(self):
-		return ""
+	
 		# implement for debugging purpose
 
 
@@ -35,10 +54,11 @@ class TCPArchive (Archive):
 		# Need to implement TCP parsing rule
 		ipLength = (15 & ord(pkt[0:1])) * 4
 		if pkt_dir == PKT_DIR_INCOMING:
-			self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])
+			self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
 		else:
-			self.externalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])
+			self.externalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])[0]
 		Archive.__init__(self, pkt_dir, pkt)
+
 		
 class UDPArchive (Archive):
 	def __init__(self, pkt_dir, pkt):
@@ -46,9 +66,9 @@ class UDPArchive (Archive):
 		# Need to implement UDP parsing rule
 		ipLength = (15 & ord(pkt[0:1])) * 4
 		if pkt_dir == PKT_DIR_INCOMING:
-			self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])
+			self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
 		else:
-			self.externalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])
+			self.externalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])[0]
 		Archive.__init__(self, pkt_dir, pkt)
 		
 class ICMPArchive (Archive):
@@ -64,7 +84,7 @@ class ICMPArchive (Archive):
 class DNSArchive(UDPArchive):
 	def __init__(self, pkt_dir, pkt):
 		# DNSArchieve build on top of UDPArchive
-		self.app = "dns"
+		self.app = DNS_APP
 		self.domainName = self.findDomainName(pkt_dir, pkt)
 		UDPArchive.__init__(self, pkt_dir, pkt)
 
@@ -80,7 +100,7 @@ class DNSArchive(UDPArchive):
 				domainName = domainName + elem
 			countByte = indicator + countByte + 1
 			indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
-        	if (indicator != 0):
-        		domainName = domainName + '.'
+			if (indicator != 0):
+				domainName = domainName + '.'
 		return domainName
 

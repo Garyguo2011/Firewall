@@ -19,8 +19,10 @@ class CountryCodeDict(object):
         # Finish in constructor
         inputFile = open(dataBase)
         fileLine = inputFile.readline()
+        count = 0
         while fileLine:
             self.add(fileLine)
+            fileLine = inputFile.readline()
 
     def add (self, inputStr):
         # conver every ipaddress into integrer number
