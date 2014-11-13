@@ -80,7 +80,7 @@ class DNSArchive(UDPArchive):
 				domainName = domainName + elem
 			countByte = indicator + countByte + 1
 			indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
-        	if (indicator != 0):
-        		domainName = domainName + '.'
+        		if (indicator != 0):
+        			domainName = domainName + '.'
 		return domainName
 
