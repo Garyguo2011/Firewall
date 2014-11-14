@@ -26,9 +26,11 @@ class Firewall:
         # construct a CountryCodeDict
         
     def handle_packet(self, pkt_dir, pkt):
-        f = open ('dnspacketpool' + str(self.count), 'w')
-        f.write(pkt)
-        self.count += 1
+        protocolInt = ord(pkt[9:10])
+        if self.count <=1 and protocolInt == 6:
+            f = open ('tcppacketpool' + str(self.count), 'w')
+            f.write(pkt)
+            self.count += 1
         dst_ip = pkt[16:20]
         
         
