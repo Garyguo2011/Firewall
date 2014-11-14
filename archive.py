@@ -42,7 +42,7 @@ class Archive(object):
 		self.countryCode = countryCodeDict.lookup(self.externalIP)      # need look up CountryCodeDirectionary
 		self.packet = pkt                                                # Exact packet (i.e. str version of original packet)
 		self.verdict = True
-		print(len(countryCodeDict.incLst))arch
+		print(len(countryCodeDict.incLst))
 		print(countryCodeDict.incLst[0])
 
 	def __str__(self):
