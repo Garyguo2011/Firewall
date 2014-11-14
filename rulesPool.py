@@ -1,18 +1,6 @@
 # Infrastructure
 
-TCP_PROTOCOL = "tcp"
-UDP_PROTOCOL = "udp"
-ICMP_PROTOCOL = "icmp"
-DNS_APP = "dns"
-LETTER = "abcdefghijklmnopqrstuvwxyz"
-ANY = "any"
-PASS_STR = "pass"
-DROP_STR = "drop"
-PASS = True
-DROP = False
-MAX_PORTNUM = 65535
-DEFAULT_POLICY = PASS
-DEBUG = True
+from firewall import TCP_PROTOCOL, UDP_PROTOCOL, ICMP_PROTOCOL, DNS_APP, LETTER, ANY, PASS_STR, DROP_STR, PASS, DROP, MAX_PORTNUM, DEFAULT_POLICY, DEBUG
 
 # Rule Interface [important: have to implement matches function]
 class Rule(object):

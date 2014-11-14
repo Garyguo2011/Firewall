@@ -1,0 +1,13 @@
+TCP_PROTOCOL = "tcp"
+UDP_PROTOCOL = "udp"
+ICMP_PROTOCOL = "icmp"
+DNS_APP = "dns"
+LETTER = "abcdefghijklmnopqrstuvwxyz"
+ANY = "any"
+PASS_STR = "pass"
+DROP_STR = "drop"
+PASS = True
+DROP = False
+MAX_PORTNUM = 65535
+DEFAULT_POLICY = PASS
+DEBUG = False
