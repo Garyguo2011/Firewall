@@ -10,7 +10,7 @@ def ip_int_to_str(ipNum):
 	ipStrList.append((ipNum >> 0) & 255)
 	return "%d.%d.%d.%d" % (ipStrList[0], ipStrList[1], ipStrList[2], ipStrList[3])
 
-f = open ('tcppacketpool0')
+f = open ('dnspacketpool0')
 inputbuffer = f.read()
 firewallTest = Firewall(None, None, None)
 
