@@ -1,5 +1,3 @@
-import socket
-
 class CountryCodeEntry(object):
     def __init__(self, lowerIPnum, higherIPnum, countryCode):
         self.lowerIPnum = lowerIPnum
@@ -25,8 +23,6 @@ class CountryCodeEntry(object):
 class CountryCodeDict(object):
     def __init__(self, dataBase):
         self.incLst=[]
-        # While loop reading file and parse entries and store as CountryCodeEntry
-        # Finish in constructor
         inputFile = open(dataBase)
         fileLine = inputFile.readline()
         count = 0
@@ -35,9 +31,6 @@ class CountryCodeDict(object):
             fileLine = inputFile.readline()
 
     def add (self, inputStr):
-        # conver every ipaddress into integrer number
-        # 1.2.3.4 = 1 << 24 | 2 << 16 | 3 << 8 | 4
-        # parse this string
         elem = inputStr[:-1].split()
         llist = elem[0].split('.')
         lowerIPnum = (int(llist[0]) << 24) + (int(llist[1]) << 16) + (int(llist[2])  << 8) + int(llist[3])
@@ -48,19 +41,12 @@ class CountryCodeDict(object):
         self.incLst.append(CountryCodeEntry(lowerIPnum, higherIPnum, countrycode))
 
     def lookup(self, ipNumber):
-        # return a countrycode
-        # covert ipAddress to integer number and do radix or bineary search
-        # print 'reach here'
-        # ipStr = self.ip_int_to_str(ipNumber).split('.')
-        # ipInt = (int(ipStr[0]) << 24) + (int(ipStr[1]) << 16) + (int(ipStr[2])  << 8) + int(ipStr[3])
         return self.binary_search(ipNumber, 0, len(self.incLst) - 1)
 
     def binary_search(self, ip, imin, imax):
         if (imax < imin):
             return None
         imid = (imin + imax) / 2
-        # if imid == 1119:
-            # print '1119 here' + str(imax) + '***' + str(imin)
         if (self.incLst[imid].compareWithLower(ip) == -1):
             return self.binary_search(ip, imin, imid - 1)
         elif (self.incLst[imid].compareWithLower(ip) == 1):
@@ -69,13 +55,4 @@ class CountryCodeDict(object):
             else:
                 return self.binary_search(ip, imid + 1, imax)
         else:
-            # print 'reach here'
             return self.incLst[imid].countryCode   
-
-    def ip_int_to_str(self, ipNum):
-        ipStrList = []
-        ipStrList.append((ipNum >> 24) & 255)
-        ipStrList.append((ipNum >> 16) & 255)
-        ipStrList.append((ipNum >> 8) & 255)
-        ipStrList.append((ipNum >> 0) & 255)
-        return "%d.%d.%d.%d" % (ipStrList[0], ipStrList[1], ipStrList[2], ipStrList[3])

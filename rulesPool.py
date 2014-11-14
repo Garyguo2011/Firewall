@@ -1,7 +1,4 @@
 # Infrastructure
-
-from firewall import TCP_PROTOCOL, UDP_PROTOCOL, ICMP_PROTOCOL, DNS_APP, LETTER, ANY, PASS_STR, DROP_STR, PASS, DROP, MAX_PORTNUM, DEFAULT_POLICY, DEBUG
-
 # Rule Interface [important: have to implement matches function]
 class Rule(object):
     def __init__(self, verdictStr):
@@ -231,11 +228,11 @@ class StaticRulesPool(object):
 
     def check(self, archive):
         if self.isEmpty():
-            return
+            return PASS
         for rule in self.rule_list:
             if rule.matches(archive):
-                archive.setVerdict(rule.getVerdict())
-                return
+                # archive.setVerdict(rule.getVerdict())
+                return rule.getVerdict()
 
     def isEmpty(self):
         return len(self.rule_list) == 0

@@ -29,8 +29,7 @@ class Archive(object):
         self.countryCode = countryCodeDict.lookup(self.externalIP)      # need look up CountryCodeDirectionary
         self.packet = pkt                                                # Exact packet (i.e. str version of original packet)
         self.verdict = True
-        print(len(countryCodeDict.incLst))
-        print(countryCodeDict.incLst[0])
+        self.valid = True
 
     def getDirection(self):
         return self.direction
@@ -47,8 +46,14 @@ class Archive(object):
     def getPacket(self):
         return self.packet
 
-    def getVerdict(self):
-        return self.verdict
+    # def getVerdict(self):
+    #     return self.verdict
+
+    # def setVerdict(self, action):
+    #     self.verdict = action
+
+    def isValid(self):
+        return self.valid
 
     def __str__(self):
         if self.direction == PKT_DIR_INCOMING:
@@ -60,8 +65,8 @@ class Archive(object):
         else:
             verdict_str = "DROP"
         externalIP_str = self.ip_int_to_str(self.externalIP)
-        return "\n------------\n[IP Layer]: direction: %s | protocol: %s | externalIP: %s | countryCode: %s | verdict: %s" % \
-                                            (direction_str, self.protocol, externalIP_str, self.countryCode, verdict_str)
+        return "\n------------\n[IP Layer]: direction: %s | protocol: %s | externalIP: %s | countryCode: %s | valid: %s" % \
+                                            (direction_str, self.protocol, externalIP_str, self.countryCode, self.valid)
 
     def ip_int_to_str(self, ipNum):
         ipStrList = []
@@ -145,8 +150,10 @@ class DNSArchive(UDPArchive):
                 domainName = domainName + '.'
         return domainName
 
-    def getDomainName():
+    def getDomainName(self):
         return self.domainName
+
+    def getApp(self)
 
     def __str__(self):
         return UDPArchive.__str__(self) + "\n" + "[DNS Layer]: app: %s | domainName: %s" % (self.app, self.domainName)
