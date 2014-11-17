@@ -70,8 +70,7 @@ class Firewall:
     #################### bypass_phase1.py ########################
 
     def packet_allocator(self, pkt_dir, pkt, countryCodeDict):
-        if pkt == None or len(pkt) == 0 or len(pkt) < 10:
-            raise MalformError(MALFORM_PACKET)
+        self.malformCheck(pkt_dir, pkt)
         protocolNumber = ord(pkt[9:10]) # parse pkt and get protocol
         if protocolNumber == TCP_PROTOCOL_NUM:
             return TCPArchive(pkt_dir, pkt, self.countryCodeDict)
@@ -124,6 +123,13 @@ class Firewall:
             indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
         countByte += 1
         return countByte
+
+    def malformCheck(self, pkt_dir, pkt):
+        if pkt == None or len(pkt) < 20:
+            raise MalformError(MALFORM_PACKET)
+        ipLength = (15 & ord(pkt[0:1])) * 4
+        if len(pkt) < ipLength:
+            raise MalformError(MALFORM_PACKET)
 
     ################################################################
 
@@ -442,7 +448,7 @@ class CountryCodeDict(object):
         higherIPnum = elem[1]
         hlist = elem[1].split('.')
         higherIPnum = (int(hlist[0]) << 24) + (int(hlist[1]) << 16) + (int(hlist[2])  << 8) + int(hlist[3])
-        countrycode = elem[2]
+        countrycode = elem[2].lower()
         self.incLst.append(CountryCodeEntry(lowerIPnum, higherIPnum, countrycode))
 
     def lookup(self, ipNumber):
@@ -577,6 +583,9 @@ class UDPArchive (Archive):
         ipLength = (15 & ord(pkt[0:1])) * 4
         # Pkt doesn't contain enough length for UDP
         if len(pkt) < ipLength + 8:
+            raise MalformError(MALFORM_PACKET)
+        udp_length = struct.unpack('!H', pkt[(ipLength + 4):(ipLength + 6)])[0]
+        if len(pkt) < ipLength + udp_length:
             raise MalformError(MALFORM_PACKET)
         if pkt_dir == PKT_DIR_INCOMING:
             self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
