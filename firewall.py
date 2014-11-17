@@ -269,7 +269,7 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
     def __str__(self):
         ipPrefixContent_str = str(self.ipPrefixContent)
         if self.ipPrefixContent != None:
-            if self.ipPrefixContent[0] == 0 and self.ipPrefixContent[1] == 0:
+            if self.ipPrefixContent[0] == 0 and self.ipPrefixContent[1] == 0 and not DEBUG:
                 ipPrefixContent_str = "any"
             else:
                 ipStrList = []
@@ -309,7 +309,7 @@ class DNSRule(Rule):
         domainStr = fieldList[2]
         if len(domainStr) == 0:
             print("Parse Error: DNS Don't have domainStr")
-        elif len(domainStr) == 1 and domainStr[1] == "*":
+        elif len(domainStr) == 1 and domainStr[0] == "*":
             self.isPostfix = True
             self.postfix = ""
         elif len(domainStr) >= 2 and domainStr[0:2] == "*.":
@@ -329,6 +329,8 @@ class DNSRule(Rule):
         return self.app == archive.getApp()
 
     def domain_matches(self, archive):
+        if self.isPostfix and len(self.postfix) == 0:
+            return True
         if self.isPostfix:
             for i in range(0, len(archive.getDomainName())):
                 if archive.getDomainName()[i:] == self.postfix:
