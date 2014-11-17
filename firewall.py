@@ -52,16 +52,18 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        # try:
-        if pkt == None or len(pkt) == 0:
-            raise MalformError(MALFORM_PACKET)
-        archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
-        print(archive)
-        if archive != None and archive.isValid():
-            if self.staticRulesPool.check(archive) == PASS:
-                self.send(pkt_dir, pkt)
-        # except Exception as e:
-        #     raise e
+        try:
+            if pkt == None or len(pkt) == 0:
+                raise MalformError(MALFORM_PACKET)
+            archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
+            print(archive)
+            if archive != None and archive.isValid():
+                if self.staticRulesPool.check(archive) == PASS:
+                    self.send(pkt_dir, pkt)
+        except MalformError as e:
+            print e
+        except Exception as e:
+            raise e
 
     # TODO: You can add more methods as you want.
     #################### bypass_phase1.py ########################
@@ -338,13 +340,14 @@ class StaticRulesPool(object):
                     self.add(rule)
                 buf = fptr.readline()
         except IOError:
-            print ("'%s'" % (conffile))
+            print ("'%s' does not exist: use default pass" % (conffile))
+            pass
 
     def parseBuffer (self, buf):
         if buf == None or len(buf) == 0 or buf[0] == '%' or buf[0] == '\n':
             return None
         fieldList = buf.lower().split("%")[0].split("\n")[0].split()
-        if len(fieldList) == 0:
+        if len(fieldList) < 3 or len(fieldList) > 4:
             return None
         assert (len(fieldList) == 3 or len(fieldList) == 4), "%r contains some syntax error"
         ruleType = fieldList[1]
@@ -362,7 +365,7 @@ class StaticRulesPool(object):
 
     def check(self, archive):
         if self.isEmpty():
-            return PASS
+            return DEFAULT_POLICY
         for rule in self.rule_list:
             if rule.matches(archive):
                 # archive.setVerdict(rule.getVerdict())
@@ -409,12 +412,15 @@ class CountryCodeEntry(object):
 class CountryCodeDict(object):
     def __init__(self, dataBase):
         self.incLst=[]
-        inputFile = open(dataBase)
-        fileLine = inputFile.readline()
-        count = 0
-        while fileLine:
-            self.add(fileLine)
+        try:
+            inputFile = open(dataBase)
             fileLine = inputFile.readline()
+            count = 0
+            while fileLine:
+                self.add(fileLine)
+                fileLine = inputFile.readline()
+        except IOError:
+            print ("'%s' doesn't exist" % dataBase)
 
     def add (self, inputStr):
         elem = inputStr[:-1].split()
@@ -427,7 +433,10 @@ class CountryCodeDict(object):
         self.incLst.append(CountryCodeEntry(lowerIPnum, higherIPnum, countrycode))
 
     def lookup(self, ipNumber):
-        return self.binary_search(ipNumber, 0, len(self.incLst) - 1)
+        if len(self.incLst) == 0:
+            return None
+        else:
+            return self.binary_search(ipNumber, 0, len(self.incLst) - 1)
 
     def binary_search(self, ip, imin, imax):
         if (imax < imin):
@@ -530,7 +539,7 @@ class TCPArchive (Archive):
         ipLength = (15 & ord(pkt[0:1])) * 4
         if len(pkt) < ipLength + 13:
             raise MalformError(MALFORM_PACKET)
-        offset = ord(pkt[ipLength + 12: ipLength + 13]) & (15 << 4)
+        offset = (ord(pkt[ipLength + 12: ipLength + 13]) & (15 << 4)) * 4
         # Pkt doesn't contain enough length for TCP
         if len(pkt) < ipLength + 20 or len(pkt) < ipLength + offset:
             raise MalformError(MALFORM_PACKET)
