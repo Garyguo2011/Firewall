@@ -159,7 +159,13 @@ class PacketInterceptor:
             # if randint(0, 1) == 1:
                 # bound = randint(0,len(pkt))
                 # pkt = pkt[0: bound]
-            self.firewall.handle_packet(pkt_dir, pkt)
+            # print (len(pkt))
+            self.firewall.handle_packet(pkt_dir,None)
+            for i in range (0, len(pkt) + 1):
+                # print ("try: " + str(i))
+                self.firewall.handle_packet(pkt_dir,pkt[0:i])
+                
+            # self.firewall.handle_packet(pkt_dir, pkt)
 
 def print_usage():
     print >> sys.stderr, 'Invalid commandline options!'

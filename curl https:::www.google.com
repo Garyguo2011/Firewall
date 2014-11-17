@@ -1,3 +1,10 @@
+curl https://www.google.com
+
+
+
+
+
+
 % TCP Checking configuration
 
 % Ip address matching test
@@ -12,10 +19,10 @@
 	drop icmp 173.236.189.55 any
 
 	% Drop tcp from www.ibearhost.com :: curl http://www.ibearhost.com :: [DROP]
-	pass tcp 173.236.189.48/28 any
+	drop tcp 173.236.189.48/28 any
 
 	% Drop icmp from any ip :: traceroute www.ibearhost.com :: [PASS]
-    %	pass        icmp any 11-11
+	pass        icmp any 11-11
 
 	% Drop icmp form any cn ip :: ping www.amazon.cn :: [DROP]
 	pass icmp cn 7-9
@@ -27,7 +34,7 @@
 	pass udp          169.229.216.200 30000-60000         
 
 	% Drop ssh to star.cs.berkeley.edu :: [drop]
-	pass tcp 128.32.42.27 10-30
+	drop tcp 128.32.42.27 10-30
 
 	% 
 	pass dns *.com         
@@ -35,6 +42,6 @@
 	%
 	drop dns *.deanza.edu         
  
-	% pass dns *
+	pass dns *
 
-	drop dns www.stanford.edu
+	pass dns www.stanford.edu

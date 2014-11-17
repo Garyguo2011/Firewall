@@ -57,10 +57,8 @@ class Firewall:
         # TODO: Your main firewall code will be here.
         try:
             if pkt == None or len(pkt) == 0:
-                raise MalformError(MALFORM_PACKET)
+                raise MalformError(MALFORM_PACKET + "1")
             archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
-            # if archive.getProtocol() == UDP_PROTOCOL:
-            # print(archive)
             if archive != None and archive.isValid():
                 if self.staticRulesPool.check(archive) == PASS:
                     self.send(pkt_dir, pkt)
@@ -129,10 +127,13 @@ class Firewall:
 
     def malformCheck(self, pkt_dir, pkt):
         if pkt == None or len(pkt) < 20:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "2")
         ipLength = (15 & ord(pkt[0:1])) * 4
         if len(pkt) < ipLength:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "3")
+        totalLength = struct.unpack('!H', pkt[2:4])[0]
+        if len(pkt) != totalLength:
+            raise MalformError(MALFORM_PACKET + " totalLength")
 
     ################################################################
 
@@ -228,12 +229,6 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             # print("Syntax Error: " + inputStr)
 
     def matches (self, archive):
-        # if archive.getProtocol() == UDP_PROTOCOL:
-            # print ">>>> %s" % self.__str__()
-            # print "protocol_matches: %s" % self.protocol_matches(archive)
-            # print "external_ip_matches: %s" % self.external_ip_matches(archive)
-            # print "countrycode_matches: %s" % self.countrycode_matches(archive)
-            # print "external_port_matches: %s" % self.external_port_matches(archive)
         if self.protocol_matches(archive) and self.external_ip_matches(archive) and \
            self.countrycode_matches(archive) and self.external_port_matches(archive):
             return True
@@ -263,12 +258,6 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             cmpData = archive.getType()
         else:
             cmpData = archive.getExternalPort()
-            # print cmpData
-            # print "%s" % type(cmpData)
-            # print("cmpData: %d" % cmpData)
-        # print (type(cmpData))
-        # print (type(self.externalPortRange[0]))
-        # print (type(self.externalPortRange[1]))
         return self.externalPortRange[0] <= cmpData and cmpData <= self.externalPortRange[1]
 
     def __str__(self):
@@ -307,9 +296,8 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
 # Unit of Rules
 class DNSRule(Rule):
     def __init__(self, fieldList):
-        Rule.__init__(self, fieldList[0])                # Set up Verdict
+        Rule.__init__(self, fieldList[0])
         self.app = fieldList[1]
-
         domainStr = fieldList[2]
         if len(domainStr) == 0:
             pass
@@ -366,7 +354,7 @@ class StaticRulesPool(object):
                     self.add(rule)
                 buf = fptr.readline()
         except IOError:
-            print ("'%s' does not exist: use default pass" % (conffile))
+            # print ("'%s' does not exist: use default pass" % (conffile))
             pass
 
     def parseBuffer (self, buf):
@@ -376,9 +364,9 @@ class StaticRulesPool(object):
         if len(fieldList) < 3 or len(fieldList) > 4:
             return None
         ruleType = fieldList[1]
-        if ruleType == ICMP_PROTOCOL or ruleType == UDP_PROTOCOL or ruleType == TCP_PROTOCOL:
+        if (ruleType == ICMP_PROTOCOL or ruleType == UDP_PROTOCOL or ruleType == TCP_PROTOCOL) and len(fieldList) == 4:
             return GeneralRule(fieldList)
-        elif ruleType == DNS_APP:
+        elif ruleType == DNS_APP and len(fieldList) == 3:
             return DNSRule(fieldList)
         else:
             return None
@@ -393,7 +381,6 @@ class StaticRulesPool(object):
             return DEFAULT_POLICY
         for rule in self.rule_list:
             if rule.matches(archive):
-                # archive.setVerdict(rule.getVerdict())
                 # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
                 return rule.getVerdict()
         # print(">>> DEFAULT_PASS")
@@ -445,7 +432,8 @@ class CountryCodeDict(object):
                 self.add(fileLine)
                 fileLine = inputFile.readline()
         except IOError:
-            print ("'%s' doesn't exist" % dataBase)
+            # print ("'%s' doesn't exist" % dataBase)
+            pass
 
     def add (self, inputStr):
         elem = inputStr[:-1].split()
@@ -487,10 +475,10 @@ class Archive(object):
         # In another word, All of Archive has IP Header
         self.direction = pkt_dir
         if len(pkt) < 1:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "4")
         ipLength = (15 & ord(pkt[0:1])) * 4
         if len(pkt) < ipLength or len(pkt) < 20:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "5")
         protocolInt = ord(pkt[9:10])
         if protocolInt == 1:
             self.protocol = ICMP_PROTOCOL
@@ -524,12 +512,6 @@ class Archive(object):
     def getPacket(self):
         return self.packet
 
-    # def getVerdict(self):
-    #     return self.verdict
-
-    # def setVerdict(self, action):
-    #     self.verdict = action
-
     def isValid(self):
         return self.valid
 
@@ -538,10 +520,6 @@ class Archive(object):
             direction_str = "----> PKT_DIR_INCOMING"
         else:
             direction_str = "<---- PKT_DIR_OUTGOING"
-        # if self.verdict == PASS:
-        #     verdict_str = "PASS"
-        # else:
-        #     verdict_str = "DROP"
         externalIP_str = self.ip_int_to_str(self.externalIP)
         return "\n------------\n[IP Layer]: direction: %s | protocol: %s | externalIP: %s | countryCode: %s | valid: %s" % \
                                             (direction_str, self.protocol, externalIP_str, self.countryCode, self.valid)
@@ -557,17 +535,15 @@ class Archive(object):
 ################### Transport layer ####################
 class TCPArchive (Archive):
     def __init__(self, pkt_dir, pkt, countryCodeDict):
-        # Packet is String Type
-        # Need to implement TCP parsing rule
         if pkt == None or len(pkt) < 1:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "6")
         ipLength = (15 & ord(pkt[0:1])) * 4
         if len(pkt) < ipLength + 13:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "7")
         offset = ((ord(pkt[ipLength + 12: ipLength + 13]) >> 4) & 15) * 4
         # Pkt doesn't contain enough length for TCP
         if len(pkt) < ipLength + 20 or len(pkt) < ipLength + offset:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "8")
         if pkt_dir == PKT_DIR_INCOMING:
             self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
         else:
@@ -585,14 +561,14 @@ class UDPArchive (Archive):
         # Packet is String Type
         # Need to implement UDP parsing rule
         if pkt == None or len(pkt) < 1:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "9")
         ipLength = (15 & ord(pkt[0:1])) * 4
         # Pkt doesn't contain enough length for UDP
         if len(pkt) < ipLength + 8:
             raise MalformError(MALFORM_PACKET)
         udp_length = struct.unpack('!H', pkt[(ipLength + 4):(ipLength + 6)])[0]
         if len(pkt) < ipLength + udp_length:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "10")
         if pkt_dir == PKT_DIR_INCOMING:
             self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
         else:
@@ -611,11 +587,11 @@ class ICMPArchive (Archive):
         # Need to implement UDP parsing rule
         # ICMP has type field
         if pkt == None or len(pkt) < 1:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "11")
         ipLength = (15 & ord(pkt[0:1])) * 4
         # Pkt doesn't contain enough length for ICMP
         if len(pkt) < ipLength + 8:
-            raise MalformError(MALFORM_PACKET)
+            raise MalformError(MALFORM_PACKET + "12")
         self.type = ord(pkt[ipLength:(ipLength + 1)])
         Archive.__init__(self, pkt_dir, pkt, countryCodeDict)
 
@@ -635,7 +611,7 @@ class DNSArchive(UDPArchive):
 
     def findDomainName(self, pkt_dir, pkt):
         if pkt == None or len(pkt) < 1:
-            raise MalformError(DNS_PARSE_ERROR)
+            raise MalformError(DNS_PARSE_ERROR + "13")
         ipLength = (15 & ord(pkt[0:1])) * 4
         if len(pkt) < ipLength + 21:
             raise MalformError(DNS_PARSE_ERROR)
@@ -645,13 +621,13 @@ class DNSArchive(UDPArchive):
         while (indicator != 0):
             for i in range(1, indicator + 1):
                 if len(pkt) < ipLength + 21 + countByte + i:
-                    raise MalformError(DNS_PARSE_ERROR)
+                    raise MalformError(DNS_PARSE_ERROR + "14")
                 elemInt = ord(pkt[(ipLength + 20 + countByte + i):(ipLength + 21 + countByte + i)])
                 elem = chr(elemInt)
                 domainName = domainName + elem
             countByte = indicator + countByte + 1
             if len(pkt) < ipLength + 21 + countByte:
-                raise MalformError(DNS_PARSE_ERROR)
+                raise MalformError(DNS_PARSE_ERROR + "15")
             indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
             if (indicator != 0):
                 domainName = domainName + '.'
