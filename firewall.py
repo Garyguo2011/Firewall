@@ -52,18 +52,18 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        try:
-            if pkt == None or len(pkt) == 0:
-                raise MalformError(MALFORM_PACKET)
-            archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
-            print(archive)
-            if archive != None and archive.isValid():
-                if self.staticRulesPool.check(archive) == PASS:
-                    self.send(pkt_dir, pkt)
-        except MalformError as e:
-            print e
-        except Exception as e:
-            raise e
+        # try:
+        if pkt == None or len(pkt) == 0:
+            raise MalformError(MALFORM_PACKET)
+        archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
+        print(archive)
+        if archive != None and archive.isValid():
+            if self.staticRulesPool.check(archive) == PASS:
+                self.send(pkt_dir, pkt)
+        # except MalformError as e:
+        #     print e
+        # except Exception as e:
+        #     raise e
 
     # TODO: You can add more methods as you want.
     #################### bypass_phase1.py ########################
@@ -539,7 +539,7 @@ class TCPArchive (Archive):
         ipLength = (15 & ord(pkt[0:1])) * 4
         if len(pkt) < ipLength + 13:
             raise MalformError(MALFORM_PACKET)
-        offset = (ord(pkt[ipLength + 12: ipLength + 13]) & (15 << 4)) * 4
+        offset = ((ord(pkt[ipLength + 12: ipLength + 13]) >> 4) & 15) * 4
         # Pkt doesn't contain enough length for TCP
         if len(pkt) < ipLength + 20 or len(pkt) < ipLength + offset:
             raise MalformError(MALFORM_PACKET)
