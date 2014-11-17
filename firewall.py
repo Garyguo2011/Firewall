@@ -41,9 +41,12 @@ class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
-        self.staticRulesPool = StaticRulesPool(config['rule'])
-        self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
-        print(self.staticRulesPool)
+        try:
+            self.staticRulesPool = StaticRulesPool(config['rule'])
+            self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
+        except Exception:
+            pass
+        # print(self.staticRulesPool)
         # TODO: Load the firewall rules (from rule_filename) here.
         # TODO: Load the GeoIP DB ('geoipdb.txt') as well.
         # TODO: Also do some initialization if needed.
@@ -52,19 +55,19 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
-        # try:
-        if pkt == None or len(pkt) == 0:
-            raise MalformError(MALFORM_PACKET)
-        archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
-        # if archive.getProtocol() == UDP_PROTOCOL:
-        print(archive)
-        if archive != None and archive.isValid():
-            if self.staticRulesPool.check(archive) == PASS:
-                self.send(pkt_dir, pkt)
-        # except MalformError as e:
-        #     print e
-        # except Exception as e:
-        #     raise e
+        try:
+            if pkt == None or len(pkt) == 0:
+                raise MalformError(MALFORM_PACKET)
+            archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
+            # if archive.getProtocol() == UDP_PROTOCOL:
+            # print(archive)
+            if archive != None and archive.isValid():
+                if self.staticRulesPool.check(archive) == PASS:
+                    self.send(pkt_dir, pkt)
+        except MalformError as e:
+            pass
+        except Exception as e:
+            pass
 
     # TODO: You can add more methods as you want.
     #################### bypass_phase1.py ########################
@@ -172,7 +175,6 @@ class Rule(object):
 
 class GeneralRule(Rule):        # Protocol/IP/Port Rules
     def __init__(self, fieldList):
-        assert len(fieldList) == 4 and (fieldList[1] == TCP_PROTOCOL or fieldList[1] == UDP_PROTOCOL or fieldList[1] == ICMP_PROTOCOL), "[ERROR] %r is no Proper General Rule"
         Rule.__init__(self, fieldList[0])
         self.protocol = fieldList[1]
         self.isIPPrefix = self.is_ip_prefix(fieldList[2])
@@ -201,7 +203,8 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
         elif len(fieldList) == 2:
             return self.ip_str_to_int(fieldList[0]), int(fieldList[1])
         else:
-            print ("Syntax Error: " + inputStr)
+            pass
+            # print ("Syntax Error: " + inputStr)
 
     def ip_str_to_int(self, ipStr):
         fieldList = ipStr.split(".")
@@ -209,7 +212,8 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             result = (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
             return (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
         else:
-            print ("Syntax Error: " + ipStr)
+            pass
+            # print ("Syntax Error: " + ipStr)
 
     def parse_port_range(self, inputStr):
         if inputStr == ANY:
@@ -220,7 +224,8 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
         elif len(fieldList) == 2:
             return int(fieldList[0]), int(fieldList[1])
         else:
-            print("Syntax Error: " + inputStr)
+            pass
+            # print("Syntax Error: " + inputStr)
 
     def matches (self, archive):
         # if archive.getProtocol() == UDP_PROTOCOL:
@@ -302,13 +307,13 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
 # Unit of Rules
 class DNSRule(Rule):
     def __init__(self, fieldList):
-        assert len(fieldList) == 3 and fieldList[1] == "dns", "[ERROR]: '%r' is not DNS Rule"
         Rule.__init__(self, fieldList[0])                # Set up Verdict
         self.app = fieldList[1]
 
         domainStr = fieldList[2]
         if len(domainStr) == 0:
-            print("Parse Error: DNS Don't have domainStr")
+            pass
+            # print("Parse Error: DNS Don't have domainStr")
         elif len(domainStr) == 1 and domainStr[0] == "*":
             self.isPostfix = True
             self.postfix = ""
@@ -370,7 +375,6 @@ class StaticRulesPool(object):
         fieldList = buf.lower().split("%")[0].split("\n")[0].split()
         if len(fieldList) < 3 or len(fieldList) > 4:
             return None
-        assert (len(fieldList) == 3 or len(fieldList) == 4), "%r contains some syntax error"
         ruleType = fieldList[1]
         if ruleType == ICMP_PROTOCOL or ruleType == UDP_PROTOCOL or ruleType == TCP_PROTOCOL:
             return GeneralRule(fieldList)
@@ -390,9 +394,9 @@ class StaticRulesPool(object):
         for rule in self.rule_list:
             if rule.matches(archive):
                 # archive.setVerdict(rule.getVerdict())
-                print( ">>> Match Last Rule: [" + rule.__str__() + "]")
+                # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
                 return rule.getVerdict()
-        print(">>> DEFAULT_PASS")
+        # print(">>> DEFAULT_PASS")
         return DEFAULT_POLICY
 
     def isEmpty(self):
@@ -651,7 +655,7 @@ class DNSArchive(UDPArchive):
             indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
             if (indicator != 0):
                 domainName = domainName + '.'
-        return domainName
+        return domainName.lower()
 
     def getDomainName(self):
         return self.domainName

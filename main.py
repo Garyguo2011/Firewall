@@ -8,6 +8,8 @@ import time
 import fcntl
 import struct
 
+from random import randint
+
 PKT_DIR_INCOMING = 0
 PKT_DIR_OUTGOING = 1
 
@@ -153,7 +155,10 @@ class PacketInterceptor:
             ip_total_len, = struct.unpack('!H', pkt[2:4])
             if len(pkt) > ip_total_len:
                 pkt = pkt[:ip_total_len]
-
+            
+            # if randint(0, 1) == 1:
+                # bound = randint(0,len(pkt))
+                # pkt = pkt[0: bound]
             self.firewall.handle_packet(pkt_dir, pkt)
 
 def print_usage():
