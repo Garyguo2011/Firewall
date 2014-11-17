@@ -56,6 +56,7 @@ class Firewall:
         if pkt == None or len(pkt) == 0:
             raise MalformError(MALFORM_PACKET)
         archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
+        # if archive.getProtocol() == UDP_PROTOCOL:
         print(archive)
         if archive != None and archive.isValid():
             if self.staticRulesPool.check(archive) == PASS:
@@ -216,9 +217,15 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             print("Syntax Error: " + inputStr)
 
     def matches (self, archive):
+        # if archive.getProtocol() == UDP_PROTOCOL:
+            # print ">>>> %s" % self.__str__()
+            # print "protocol_matches: %s" % self.protocol_matches(archive)
+            # print "external_ip_matches: %s" % self.external_ip_matches(archive)
+            # print "countrycode_matches: %s" % self.countrycode_matches(archive)
+            # print "external_port_matches: %s" % self.external_port_matches(archive)
         if self.protocol_matches(archive) and self.external_ip_matches(archive) and \
            self.countrycode_matches(archive) and self.external_port_matches(archive):
-            return self.verdict
+            return True
         else:
             return False
 
@@ -245,6 +252,12 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             cmpData = archive.getType()
         else:
             cmpData = archive.getExternalPort()
+            # print cmpData
+            # print "%s" % type(cmpData)
+            # print("cmpData: %d" % cmpData)
+        # print (type(cmpData))
+        # print (type(self.externalPortRange[0]))
+        # print (type(self.externalPortRange[1]))
         return self.externalPortRange[0] <= cmpData and cmpData <= self.externalPortRange[1]
 
     def __str__(self):
@@ -550,7 +563,7 @@ class TCPArchive (Archive):
         Archive.__init__(self, pkt_dir, pkt, countryCodeDict)
 
     def getExternalPort(self):
-        return self.getExternalPort
+        return self.externalPort
 
     def __str__(self):
         return Archive.__str__(self) + "\n" + "[TCP Layer]: externalPort: %d" % (self.externalPort)
@@ -572,7 +585,7 @@ class UDPArchive (Archive):
         Archive.__init__(self, pkt_dir, pkt, countryCodeDict)
 
     def getExternalPort(self):
-        return self.getExternalPort
+        return self.externalPort
 
     def __str__(self):
         return Archive.__str__(self) + "\n" + "[UDP Layer]: externalPort: %d" % (self.externalPort)
@@ -595,7 +608,7 @@ class ICMPArchive (Archive):
         return self.type
 
     def __str__(self):
-        return Archive.__str__(self) + "\n" + "[UDP Layer]: Type: %d" % (self.type)
+        return Archive.__str__(self) + "\n" + "[ICMP Layer]: Type: %d" % (self.type)
 
 ################### Application layer ####################
 class DNSArchive(UDPArchive):
