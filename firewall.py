@@ -33,6 +33,10 @@ DEBUG = False
 
 GEOIPDB_FILE = 'geoipdb.txt'
 
+MALFORM_PACKET = "MALFORM PACKET"
+DNS_PARSE_ERROR = "**DNS MALFORM**"
+ERROR_HAPPEN = -1
+
 class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
@@ -48,35 +52,47 @@ class Firewall:
     # @pkt: the actual data of the IPv4 packet (including IP header)
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
+        # try:
+        if pkt == None or len(pkt) == 0:
+            raise MalformError(MALFORM_PACKET)
         archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
         print(archive)
-        if archive.isValid():
+        if archive != None and archive.isValid():
             if self.staticRulesPool.check(archive) == PASS:
                 self.send(pkt_dir, pkt)
+        # except Exception as e:
+        #     raise e
 
     # TODO: You can add more methods as you want.
     #################### bypass_phase1.py ########################
 
     def packet_allocator(self, pkt_dir, pkt, countryCodeDict):
+        if pkt == None or len(pkt) == 0 or len(pkt) < 10:
+            raise MalformError(MALFORM_PACKET)
         protocolNumber = ord(pkt[9:10]) # parse pkt and get protocol
         if protocolNumber == TCP_PROTOCOL_NUM:
             return TCPArchive(pkt_dir, pkt, self.countryCodeDict)
         elif protocolNumber == UDP_PROTOCOL_NUM:
-            if self.is_DNS_query_packet(pkt_dir, pkt):
+            if self.is_DNS_query_packet(pkt_dir, pkt) == True:
                 return DNSArchive(pkt_dir, pkt, self.countryCodeDict)
             else:
                 return UDPArchive(pkt_dir, pkt, self.countryCodeDict)
         elif protocolNumber == ICMP_PROTOCOL_NUM:
             return ICMPArchive(pkt_dir, pkt, self.countryCodeDict)
         else:
-            self.default_allow(pkt_dir, pkt)
-            return None 
+            # Defualt Allow
+            self.send(pkt_dir, pkt)
+            return None
 
     def is_DNS_query_packet(self, pkt_dir, pkt):
         ipLength = (15 & ord(pkt[0:1])) * 4
+        if len(pkt) < ipLength + 14:
+            return False
         dst_port = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])[0]
         qdcount = struct.unpack('!H', pkt[(ipLength + 12):(ipLength + 14)])[0]
         qNameLength = self.getQNameLength(pkt_dir, pkt)
+        if qNameLength == ERROR_HAPPEN or len(pkt) < ipLength + 24 + qNameLength:
+            return False
         qtype = struct.unpack('!H', pkt[(ipLength + 20 + qNameLength):(ipLength + 22 + qNameLength)])[0]
         qclass = struct.unpack('!H', pkt[(ipLength + 22 + qNameLength):(ipLength + 24 + qNameLength)])[0]
         if pkt_dir == PKT_DIR_OUTGOING and dst_port == 53 and qdcount == 1 and qclass == 1:
@@ -91,11 +107,17 @@ class Firewall:
             self.iface_ext.send_ip_packet(pkt)
 
     def getQNameLength(self, pkt_dir, pkt):
+        if pkt == None or len(pkt) == 0 or len(pkt) < 1:
+            return ERROR_HAPPEN
         ipLength = (15 & ord(pkt[0:1])) * 4
         countByte = 0
+        if len(pkt) < ipLength + 21:
+            return ERROR_HAPPEN
         indicator = ord(pkt[(ipLength + 20):(ipLength + 21)])
         while (indicator != 0):
             countByte = indicator + countByte + 1
+            if len(pkt) < ipLength + 21 + countByte:
+                return ERROR_HAPPEN
             indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
         countByte += 1
         return countByte
@@ -103,6 +125,11 @@ class Firewall:
     ################################################################
 
 # TODO: You may want to add more classes/functions as well.
+class MalformError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 ##########################################################################################
 ######################## rulesPool.py ####################################################
@@ -425,6 +452,11 @@ class Archive(object):
         # IPv4 parsing rule need here
         # In another word, All of Archive has IP Header
         self.direction = pkt_dir
+        if len(pkt) < 1:
+            raise MalformError(MALFORM_PACKET)
+        ipLength = (15 & ord(pkt[0:1])) * 4
+        if len(pkt) < ipLength or len(pkt) < 20:
+            raise MalformError(MALFORM_PACKET)
         protocolInt = ord(pkt[9:10])
         if protocolInt == 1:
             self.protocol = ICMP_PROTOCOL
@@ -440,7 +472,7 @@ class Archive(object):
             self.externalIP = dst_ip
         self.countryCode = countryCodeDict.lookup(self.externalIP)      # need look up CountryCodeDirectionary
         self.packet = pkt                                                # Exact packet (i.e. str version of original packet)
-        self.verdict = True
+        # self.verdict = True
         self.valid = True
 
     def getDirection(self):
@@ -472,10 +504,10 @@ class Archive(object):
             direction_str = "----> PKT_DIR_INCOMING"
         else:
             direction_str = "<---- PKT_DIR_OUTGOING"
-        if self.verdict == PASS:
-            verdict_str = "PASS"
-        else:
-            verdict_str = "DROP"
+        # if self.verdict == PASS:
+        #     verdict_str = "PASS"
+        # else:
+        #     verdict_str = "DROP"
         externalIP_str = self.ip_int_to_str(self.externalIP)
         return "\n------------\n[IP Layer]: direction: %s | protocol: %s | externalIP: %s | countryCode: %s | valid: %s" % \
                                             (direction_str, self.protocol, externalIP_str, self.countryCode, self.valid)
@@ -493,7 +525,15 @@ class TCPArchive (Archive):
     def __init__(self, pkt_dir, pkt, countryCodeDict):
         # Packet is String Type
         # Need to implement TCP parsing rule
+        if pkt == None or len(pkt) < 1:
+            raise MalformError(MALFORM_PACKET)
         ipLength = (15 & ord(pkt[0:1])) * 4
+        if len(pkt) < ipLength + 13:
+            raise MalformError(MALFORM_PACKET)
+        offset = ord(pkt[ipLength + 12: ipLength + 13]) & (15 << 4)
+        # Pkt doesn't contain enough length for TCP
+        if len(pkt) < ipLength + 20 or len(pkt) < ipLength + offset:
+            raise MalformError(MALFORM_PACKET)
         if pkt_dir == PKT_DIR_INCOMING:
             self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
         else:
@@ -510,7 +550,12 @@ class UDPArchive (Archive):
     def __init__(self, pkt_dir, pkt, countryCodeDict):
         # Packet is String Type
         # Need to implement UDP parsing rule
+        if pkt == None or len(pkt) < 1:
+            raise MalformError(MALFORM_PACKET)
         ipLength = (15 & ord(pkt[0:1])) * 4
+        # Pkt doesn't contain enough length for UDP
+        if len(pkt) < ipLength + 8:
+            raise MalformError(MALFORM_PACKET)
         if pkt_dir == PKT_DIR_INCOMING:
             self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
         else:
@@ -528,7 +573,12 @@ class ICMPArchive (Archive):
         # Packet is String Type
         # Need to implement UDP parsing rule
         # ICMP has type field
+        if pkt == None or len(pkt) < 1:
+            raise MalformError(MALFORM_PACKET)
         ipLength = (15 & ord(pkt[0:1])) * 4
+        # Pkt doesn't contain enough length for ICMP
+        if len(pkt) < ipLength + 8:
+            raise MalformError(MALFORM_PACKET)
         self.type = ord(pkt[ipLength:(ipLength + 1)])
         Archive.__init__(self, pkt_dir, pkt, countryCodeDict)
 
@@ -547,16 +597,24 @@ class DNSArchive(UDPArchive):
         UDPArchive.__init__(self, pkt_dir, pkt, countryCodeDict)
 
     def findDomainName(self, pkt_dir, pkt):
+        if pkt == None or len(pkt) < 1:
+            raise MalformError(DNS_PARSE_ERROR)
         ipLength = (15 & ord(pkt[0:1])) * 4
+        if len(pkt) < ipLength + 21:
+            raise MalformError(DNS_PARSE_ERROR)
         indicator = ord(pkt[(ipLength + 20):(ipLength + 21)])
         domainName = ''
         countByte = 0
         while (indicator != 0):
             for i in range(1, indicator + 1):
+                if len(pkt) < ipLength + 21 + countByte + i:
+                    raise MalformError(DNS_PARSE_ERROR)
                 elemInt = ord(pkt[(ipLength + 20 + countByte + i):(ipLength + 21 + countByte + i)])
                 elem = chr(elemInt)
                 domainName = domainName + elem
             countByte = indicator + countByte + 1
+            if len(pkt) < ipLength + 21 + countByte:
+                raise MalformError(DNS_PARSE_ERROR)
             indicator = ord(pkt[(ipLength + 20 + countByte):(ipLength + 21 + countByte)])
             if (indicator != 0):
                 domainName = domainName + '.'
