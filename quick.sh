@@ -28,8 +28,8 @@ ssh cs168-du@star.cs.berkeley.edu
 echo "pass"
 ping www.taobao.com
 
-echo "drop"
+echo "drop ping www.stanford.edu"
 ping www.stanford.edu
 
-echo "drop"
+echo "drop dig www.deanza.edu"
 dig www.deanza.edu

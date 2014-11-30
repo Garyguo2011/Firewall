@@ -174,6 +174,9 @@ class Rule(object):
     def matches(self, archive):
         pass
 
+    def handle(self, archive):
+        pass
+
 class GeneralRule(Rule):        # Protocol/IP/Port Rules
     def __init__(self, fieldList):
         Rule.__init__(self, fieldList[0])
