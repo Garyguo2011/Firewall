@@ -1,6 +1,7 @@
 import socket
 import struct
 import time
+from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 
 
 class DenyTCPRule(Rule):
@@ -18,7 +19,8 @@ class DenyTCPRule(Rule):
         # Assume the archive you receive is TCPArchive
         # TODO: 
         # Injecting RST Packets: deny*tcp
-        pass
+        rstPacket = self.rstPacketGenerator(archive.getPacket)
+        self.send(PKT_DIR_OUTGOING, rstPacket)
 
     def checksum(self, buf, size):
         # Implement this
@@ -26,13 +28,14 @@ class DenyTCPRule(Rule):
         while i < size - 1:
             elem = struct.unpack('!H', buf[i:i+2])[0]
             result += elem
-            i += 1
+            i += 2
         if size & 1 == 1:
             elem = ord(buf[i:i+1])
             result += elem
         while result >> 16 != 0:
             result = (result & 65535) + (result >> 16)
-        return result
+        result = result ^ 0xffff
+        return struct.pack('!H', result)
 
     def rstPacketGenerator(self, original):
         # generating ip header
@@ -107,7 +110,7 @@ class DenyDNSRule(Rule):
         length = 8 + 12 + qnameLength + 4 + qnameLength + 14
         lengthStr = struct.pack('!H', length)    # udp + dns length
         checksumStr = struct.pack('!H', 0)    # checksum
-        result = result + srcPortStr + dstPortStr + length + checksumStr
+        result = result + srcPortStr + dstPortStr + lengthStr + checksumStr
         # generating dns header
         dnsidStr = original[ipLength+8:ipLength+10]
         flag = (1 << 15) | (1 << 10)
@@ -121,12 +124,12 @@ class DenyDNSRule(Rule):
         questionStr = original[ipLength+20:ipLength+24+qnameLength]
         result = result + questionStr
         # generating answer part
-        nameStr = original[ipLength+20:ipLength+20+qnameLength]
-        typeStr = struct.pack('!H', 1)
-        classStr = struct.pack('!H', 1)
-        answerttlStr = struct.pack('!H', 1)
-        rdlengthStr = struct.pack('!L', 4)
-        rdataStr = socket.inet_aton('54.173.224.150')
+        nameStr = original[ipLength+20:ipLength+20+qnameLength]    # name
+        typeStr = struct.pack('!H', 1)    # type
+        classStr = struct.pack('!H', 1)    # class
+        answerttlStr = struct.pack('!H', 1)    # answer
+        rdlengthStr = struct.pack('!L', 4)    # rdlength
+        rdataStr = socket.inet_aton('54.173.224.150')    #rdata
         result = result + nameStr + typeStr + classStr + answerttlStr + rdlengthStr + rdataStr
 
     def getQNameLength(self, pkt):
@@ -143,4 +146,18 @@ class DenyDNSRule(Rule):
         countByte += 1
         return countByte
 
+    def checksum(self, buf, size):
+        # Implement this
+        result, i = 0, 0
+        while i < size - 1:
+            elem = struct.unpack('!H', buf[i:i+2])[0]
+            result += elem
+            i += 2
+        if size & 1 == 1:
+            elem = ord(buf[i:i+1])
+            result += elem
+        while result >> 16 != 0:
+            result = (result & 65535) + (result >> 16)
+        result = result ^ 0xffff
+        return struct.pack('!H', result)
 
