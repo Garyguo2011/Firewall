@@ -60,7 +60,9 @@ class Firewall:
                 raise MalformError(MALFORM_PACKET + "1")
             archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
             if archive != None and archive.isValid():
-                if self.staticRulesPool.check(archive) == PASS:
+                self.staticRulesPool.check(archive)
+                # if self.staticRulesPool.check(archive) == PASS:
+                if archive.getVerdict() == PASS:
                     self.send(pkt_dir, pkt)
         except MalformError as e:
             pass
@@ -385,9 +387,15 @@ class StaticRulesPool(object):
         for rule in self.rule_list:
             if rule.matches(archive):
                 # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
-                return rule.getVerdict()
+                archive.setVerdict(rule.getVerdict())
         # print(">>> DEFAULT_PASS")
-        return DEFAULT_POLICY
+        # return DEFAULT_POLICY
+
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    def matchLogRules(self, httpRequest):
+        # true if there is a match
+        # false otherwise
+
 
     def isEmpty(self):
         return len(self.rule_list) == 0
@@ -497,7 +505,7 @@ class Archive(object):
             self.externalIP = dst_ip
         self.countryCode = countryCodeDict.lookup(self.externalIP)      # need look up CountryCodeDirectionary
         self.packet = pkt                                                # Exact packet (i.e. str version of original packet)
-        # self.verdict = True
+        self.verdict = PASS
         self.valid = True
 
     def getDirection(self):
@@ -514,6 +522,12 @@ class Archive(object):
 
     def getPacket(self):
         return self.packet
+
+    def getVerdict(self):
+        return self.verdict
+
+    def setVerdict(self, verdict):
+        self.verdict = verdict
 
     def isValid(self):
         return self.valid
@@ -549,15 +563,59 @@ class TCPArchive (Archive):
             raise MalformError(MALFORM_PACKET + "8")
         if pkt_dir == PKT_DIR_INCOMING:
             self.externalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]
+            self.internalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])[0]    # add for 3b
+            # self.externalSeqNo = struct.unpack('!L', pkt[(ipLength + 4): (ipLength + 8)])[0]
+            # self.internalSeqNo = struct.unpack('!L', pkt[(ipLength + 8): (ipLength + 12)])[0]
         else:
             self.externalPort = struct.unpack('!H', pkt[(ipLength + 2):(ipLength + 4)])[0]
+            self.internalPort = struct.unpack('!H', pkt[ipLength:(ipLength + 2)])[0]          # add for 3b
+            # self.externalSeqNo = struct.unpack('!L', pkt[(ipLength + 8): (ipLength + 12)])[0]
+            # self.internalSeqNo = struct.unpack('!L', pkt[(ipLength + 4): (ipLength + 8)])[0]
+        self.seqno = struct.unpack('!L', pkt[(ipLength + 4): (ipLength + 8)])[0]
+        self.ackno = struct.unpack('!L', pkt[(ipLength + 8): (ipLength + 12)])[0]
+        self.data = pkt[ipLength + offset: len(pkt)]
         Archive.__init__(self, pkt_dir, pkt, countryCodeDict)
 
     def getExternalPort(self):
         return self.externalPort
 
+    def getInternalPort(self):
+        return self.internalPort
+
+    # def getExternalSeqNo(self):
+    #     return self.externalSeqNo
+
+    # def getInternalSeqNo(self):
+    #     return self.internalSeqNo
+
+    def getSeqNo(self):
+        return self.seqno
+
+    def getAckNo(self):
+        return self.ackno
+
+    def getData():
+        # impelemtaiton
+        return self.data
+
+    def getDataSize(self):
+        return len(self.data)
+
+    def is_SYN(self):
+        return (ord(pkt[ipLength + 13: ipLength + 14]) & 2) == 2
+
+    def is_ACK(self):
+        return (ord(pkt[ipLength + 13: ipLength + 14]) & 16) == 16
+
+    def is_FIN(self):
+        return (ord(pkt[ipLength + 13: ipLength + 14]) & 1) == 1
+
+    def is_RST(self):
+        return (ord(pkt[ipLength + 13: ipLength + 14]) & 4) == 4
+
     def __str__(self):
-        return Archive.__str__(self) + "\n" + "[TCP Layer]: externalPort: %d" % (self.externalPort)
+        return Archive.__str__(self) + "\n" + "[TCP Layer]: externalPort: %d | internalPort: %d | externalSeqNo: %d | internalSeqNo: %d | is_ACK: %s | is_FIN: %s | is_RST: %s" % 
+                                                    (self.externalPort, self.internalPort, self.externalSeqNo, self.internalSeqNo, self.is_ACK(), self.is_FIN(), self.is_RST())
 
 class UDPArchive (Archive):
     def __init__(self, pkt_dir, pkt, countryCodeDict):
