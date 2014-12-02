@@ -657,7 +657,7 @@ class TCPArchive (Archive):
         return (ord(pkt[ipLength + 13: ipLength + 14]) & 4) == 4
 
     def __str__(self):
-        return Archive.__str__(self) + "\n" + "[TCP Layer]: externalPort: %d | internalPort: %d | externalSeqNo: %d | internalSeqNo: %d | is_ACK: %s | is_FIN: %s | is_RST: %s" % 
+        return Archive.__str__(self) + "\n" + "[TCP Layer]: externalPort: %d | internalPort: %d | externalSeqNo: %d | internalSeqNo: %d | is_ACK: %s | is_FIN: %s | is_RST: %s" % \
                                                     (self.externalPort, self.internalPort, self.externalSeqNo, self.internalSeqNo, self.is_ACK(), self.is_FIN(), self.is_RST())
 
 class UDPArchive (Archive):
@@ -918,7 +918,7 @@ class LogHttpRule(Rule):
         content = fieldList[2]
 
     def parse_content(self, content):
-        if len(content) == 0
+        if len(content) == 0:
             print "Pase Error: DNS Don't have content"
             pass
         elif len(content) == 1 and content[0] == "*":
@@ -1151,6 +1151,47 @@ class HTTPLogGenerator(object):
                 self.logfileptr.flush()
 
 # ===================== HTTP Header Class ==================
+class HTTPHeader(object):
+    def __init__(self):
+        self.complete = False
+        self.stream = ""
+        self.log = False
+
+    def append_to_tail(self, archive):
+        if self.complete == False:
+            self.stream += archive.getData()
+            self.check_complete()
+
+    def check_complete(self):
+        # Search entire stream see if "\r\n" has occur
+        # if so, set complete = True and call parse_stream()
+        if len(self.stream) < 4:
+            return
+        for i in range(0, len(self.stream) - 3):
+            substring = self.stream[i:i+4]
+            asciiStr = chr(ord(substring[0])) + chr(ord(substring[1])) + chr(ord(substring[2])) + chr(ord(substring[3]))
+            if asciiStr == "\r\n\r\n":
+                self.complete = True
+                self.stream = self.stream[0:i+4]
+                self.parse_stream()
+
+    def parse_stream(self):
+        # Subclass need to overide this function
+        pass
+
+    def isComplete(self):
+        return self.complete
+
+    def getStream(self):
+        return self.stream
+
+    def setLog(self):
+        self.log = True
+
+    def hasLogged(self):
+        return self.log
+
+        
 
 class HTTPRequest(HTTPHeader):
     def __init__(self, archive):
@@ -1212,43 +1253,5 @@ class HTTPRespond(HTTPHeader):
             result = result + elem
         return result.split('\r\n')
 
-class HTTPHeader(object):
-    def __init__(self):
-        self.complete = False
-        self.stream = ""
-        self.log = False
 
-    def append_to_tail(self, archive):
-        if self.complete == False:
-            self.stream += archive.getData()
-            self.check_complete()
-
-    def check_complete(self):
-        # Search entire stream see if "\r\n" has occur
-        # if so, set complete = True and call parse_stream()
-        if len(self.stream) < 4:
-            return
-        for i in range(0, len(self.stream) - 3):
-            substring = self.stream[i:i+4]
-            asciiStr = chr(ord(substring[0])) + chr(ord(substring[1])) + chr(ord(substring[2])) + chr(ord(substring[3]))
-            if asciiStr == "\r\n\r\n":
-                self.complete = True
-                self.stream = self.stream[0:i+4]
-                self.parse_stream()
-
-    def parse_stream(self):
-        # Subclass need to overide this function
-        pass
-
-    def isComplete(self):
-        return self.complete
-
-    def getStream(self):
-        return self.stream
-
-    def setLog(self):
-        self.log = True
-
-    def hasLogged(self):
-        return self.log
 
