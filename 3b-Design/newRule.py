@@ -20,7 +20,7 @@ class DenyTCPRule(Rule):
         # TODO: 
         # Injecting RST Packets: deny*tcp
         rstPacket = self.rstPacketGenerator(archive.getPacket)
-        self.send(PKT_DIR_OUTGOING, rstPacket)
+        self.send(PKT_DIR_INCOMING, rstPacket)
 
     def checksum(self, buf, size):
         # Implement this
@@ -86,6 +86,9 @@ class DenyDNSRule(Rule):
         # Assume the archive you receive is TCPArchive
         # TODO:
         # Injecting DNS Response Packets: deny*dns (spec part 2)
+        dnsPacket = self.dnsPacketGenerator(archive.getPacket)
+        self.send(PKT_DIR_INCOMING, dnsPacket)
+
 
     def dnsPacketGenerator(self, original):
         qnameLength = self.getQNameLength(original)
