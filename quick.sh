@@ -7,7 +7,7 @@ ping www.google.com
 echo "drop"
 ping www.ibearhost.com
 
-echo "drop"
+echo "pass"
 curl http://www.ibearhost.com > $$; rm $$;
 
 echo "pass"
