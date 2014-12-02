@@ -163,7 +163,25 @@ class HTTPRequest(HTTPHeader):
         self.version = ""
     
     def parse_stream(self):
-        pass
+        stream_str_arr = self.stringGenerator(self.stream)
+        first_line, second_line = stream_str_arr[0], stream_str_arr[1]
+        first_line_arr = first_line.split(' ')
+        self.method = first_line_arr[0]
+        self.path = first_line_arr[1]
+        self.version = first_line_arr[2] 
+        second_line_arr = second_line.split(':')
+        if second_line_arr[0] == 'Host' and len(second_line_arr) == 2:
+            temp = second_line_arr[1]
+            while temp[0:1] == ' ':
+                temp = temp[1:]
+            self.host_name = temp
+
+    def stringGenerator(self, inputStream):
+        result = ''
+        for i in range(0, len(inputStream)):
+            elem = chr(ord(inputStream[i:i+1]))
+            result = result + elem
+        return result
 
 class HTTPRespond(HTTPHeader):
     def __init__(self, archive):
@@ -172,7 +190,24 @@ class HTTPRespond(HTTPHeader):
         self.object_size = -1
 
     def parse_stream(self):
-        pass
+        stream_str_arr = self.stringGenerator(self.stream)
+        first_line_arr = stream_str_arr[0].split(' ')
+        self.status_code = first_line_arr[1]
+        for i in range(0, len(stream_str_arr)):
+            line_arr = stream_str_arr[i].split(':')
+            if line_arr[0] == 'Content-Length':
+                temp = line_arr[1]
+                while temp[0:1] == ' ':
+                    temp = temp[1:]
+                self.object_size = int(temp)
+
+
+    def stringGenerator(self, inputStream):
+        result = ''
+        for i in range(0, len(inputStream)):
+            elem = chr(ord(inputStream[i:i+1]))
+            result = result + elem
+        return result.split('\r\n')
 
 class HTTPHeader(object):
     def __init__(self):
