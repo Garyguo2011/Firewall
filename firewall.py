@@ -51,7 +51,7 @@ class Firewall:
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         # try:
-        self.staticRulesPool = StaticRulesPool(config['rule'])
+        self.staticRulesPool = StaticRulesPool(config['rule'], self.send)
         print(self.staticRulesPool)
         self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
         self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
@@ -71,7 +71,7 @@ class Firewall:
         if pkt == None or len(pkt) == 0:
             raise MalformError(MALFORM_PACKET + "1")
         archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
-        print (archive)
+        # print (archive)
         if archive != None and archive.isValid():
             self.staticRulesPool.check(archive)
             # ++++++++++ Add for 3b ++++++++++++++++
@@ -198,7 +198,7 @@ class Rule(object):
     def matches(self, archive):
         pass
 
-    def handle(self, archive):
+    def handle(self, archive, send_function):
         pass
 
 class GeneralRule(Rule):        # Protocol/IP/Port Rules
@@ -370,9 +370,10 @@ class DNSRule(Rule):
 
 # static rules pool and matching rules pool
 class StaticRulesPool(object):
-    def __init__(self, conffile):
+    def __init__(self, conffile, send_function):
         self.rule_list = []
         self.log_rule_list = []
+        self.send_function = send_function
         try:
             fptr = open (conffile)
             buf = fptr.readline()
@@ -426,14 +427,11 @@ class StaticRulesPool(object):
             archive.setVerdict(PASS)
         for rule in self.rule_list:
             if rule.matches(archive):
-                print( ">>> Match Last Rule: [" + rule.__str__() + "]")
-                rule.handle(archive)
+                # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
+                rule.handle(archive, self.send_function)
                 archive.setVerdict(rule.getVerdict())
                 return
-        print(">>> DEFAULT_PASS")
-
-        
-        # return DEFAULT_POLICY
+        # print(">>> DEFAULT_PASS")
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     def matchLogRules(self, httpRequest):
@@ -442,6 +440,7 @@ class StaticRulesPool(object):
 
         for logrule in self.log_rule_list:
             if logrule.matches(httpRequest):
+                # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
                 return True
         return False
 
@@ -750,12 +749,12 @@ class DenyTCPRule(GeneralRule):
     def __init__(self, fieldList):
         GeneralRule.__init__(self, fieldList)
 
-    def handle(self, archive):
+    def handle(self, archive, send_function):
         # Assume the archive you receive is TCPArchive
         # TODO: 
         # Injecting RST Packets: deny*tcp
-        rstPacket = self.rstPacketGenerator(archive.getPacket)
-        self.send(PKT_DIR_INCOMING, rstPacket)
+        rstPacket = self.rstPacketGenerator(archive.getPacket())
+        send_function(PKT_DIR_INCOMING, rstPacket)
 
     def checksum(self, buf, size):
         # Implement this
@@ -810,12 +809,12 @@ class DenyDNSRule(DNSRule):
     def __init__(self, fieldList):
         DNSRule.__init__(self, fieldList)
 
-    def handle(self, archive):
+    def handle(self, archive, send_function):
         # Assume the archive you receive is TCPArchive
         # TODO:
         # Injecting DNS Response Packets: deny*dns (spec part 2)
-        dnsPacket = self.dnsPacketGenerator(archive.getPacket)
-        self.send(PKT_DIR_INCOMING, dnsPacket)
+        dnsPacket = self.dnsPacketGenerator(archive.getPacket())
+        send_function(PKT_DIR_INCOMING, dnsPacket)
 
 
     def dnsPacketGenerator(self, original):
@@ -862,6 +861,7 @@ class DenyDNSRule(DNSRule):
         rdlengthStr = struct.pack('!L', 4)    # rdlength
         rdataStr = socket.inet_aton('54.173.224.150')    #rdata
         result = result + nameStr + typeStr + classStr + answerttlStr + rdlengthStr + rdataStr
+        return result
 
     def getQNameLength(self, pkt):
         ipLength = (15 & ord(pkt[0:1])) * 4
@@ -907,8 +907,8 @@ class LogHttpRule(Rule):
     
     def __init__(self, fieldList):
         Rule.__init__(self, PASS_STR)
-        self.type 
-        self.postfix
+        self.type = None
+        self.postfix = None
         self.app =fieldList[1]
 
         content = fieldList[2]
@@ -1220,8 +1220,7 @@ class HTTPRequest(HTTPHeader):
                     temp = temp[1:]
                 self.host_name = temp
 
-
-    def getHostName():
+    def getHostName(self):
         return self.host_name
 
 class HTTPRespond(HTTPHeader):
