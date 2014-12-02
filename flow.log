@@ -1,0 +1,631 @@
+cs168@cs168vm:~/Firewall$ sudo ./main.py --mode firewall
+Command-line options
+  mode: firewall
+  rule: rules.conf
+Initializing... done
+[DNS DENY Rule] -> drop dns www.berkeley.edu
+[DNS DENY Rule] -> drop dns www.deanza.edu
+[TCP DENY Rule] -> drop tcp 172.31.70.91 80
+======= LOG Rule =======
+[log Rule]: log http *.ibearhost.com
+[log Rule]: log http www.ibearhost.com
+[log Rule]: log http *.berkeley.edu
+[log Rule]: log http *
+
+
+>>>>>>>> 0 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-inst.eecs.berkeley.edu
+
+>>>>>>>> 1 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 2 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704036886 | AckNo: 0 | is_ACK: False | is_FIN: False | is_RST: False
+
+>>>>>>>> 3 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89792001 | AckNo: 3704036887 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 4 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704036887 | AckNo: 89792002 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 5 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704036887 | AckNo: 89792002 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 6 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89792002 | AckNo: 3704037200 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 7 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89792002 | AckNo: 3704037200 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 8 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704037200 | AckNo: 89792523 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 9 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-inst.eecs.berkeley.edu
+
+>>>>>>>> 10 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704037200 | AckNo: 89792523 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 11 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89792523 | AckNo: 3704037514 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 12 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 13 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89792523 | AckNo: 3704037514 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 14 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704037514 | AckNo: 89793072 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 15 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-inst.eecs.berkeley.edu
+
+>>>>>>>> 16 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704037514 | AckNo: 89793072 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 17 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89793072 | AckNo: 3704037897 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 18 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-inst.eecs.berkeley.edu
+
+>>>>>>>> 19 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 20 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89793072 | AckNo: 3704037897 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 21 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89794492 | AckNo: 3704037897 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 22 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704037897 | AckNo: 89794492 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 23 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 24 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704037897 | AckNo: 89794918 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 25 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704037897 | AckNo: 89794918 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 26 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89794918 | AckNo: 3704038281 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 27 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 3141092863 | AckNo: 0 | is_ACK: False | is_FIN: False | is_RST: False
+
+>>>>>>>> 28 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 89856001 | AckNo: 3141092864 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 29 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 3141092864 | AckNo: 89856002 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 30 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www.eecs.berkeley.edu
+
+>>>>>>>> 31 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89794918 | AckNo: 3704038281 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 32 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89796338 | AckNo: 3704038281 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 33 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89796533 | AckNo: 3704038281 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 34 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704038281 | AckNo: 89796533 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 35 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 36 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 3052381615 | AckNo: 0 | is_ACK: False | is_FIN: False | is_RST: False
+
+>>>>>>>> 37 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51236 | seqNo: 1246506691 | AckNo: 0 | is_ACK: False | is_FIN: False | is_RST: False
+
+>>>>>>>> 38 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 89920001 | AckNo: 3052381616 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 39 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51236 | seqNo: 89984001 | AckNo: 1246506692 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 40 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 3052381616 | AckNo: 89920002 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 41 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51236 | seqNo: 1246506692 | AckNo: 89984002 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 42 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 3052381616 | AckNo: 89920002 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 43 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 89920002 | AckNo: 3052381985 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 44 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 89920002 | AckNo: 3052381985 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 45 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 3052381985 | AckNo: 89921124 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 46 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704038281 | AckNo: 89797776 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 47 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-inst.eecs.berkeley.edu
+
+>>>>>>>> 48 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704038281 | AckNo: 89797776 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 49 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89797776 | AckNo: 3704038650 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 50 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 3141092864 | AckNo: 89856002 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 51 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 89856002 | AckNo: 3141093238 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 52 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 53 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89797776 | AckNo: 3704038650 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 54 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 89856002 | AckNo: 3141093238 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 55 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704038650 | AckNo: 89798224 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 56 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 3141093238 | AckNo: 89856602 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 57 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-inst.eecs.berkeley.edu
+
+>>>>>>>> 58 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: piazza.com
+
+>>>>>>>> 59 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: wps.pearsoned.com
+
+>>>>>>>> 60 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704038650 | AckNo: 89798224 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 61 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89798224 | AckNo: 3704038933 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 62 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89798224 | AckNo: 3704038933 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 63 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 64 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704038933 | AckNo: 89798497 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 65 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 66 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-net.cs.umass.edu
+
+>>>>>>>> 67 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: cis.poly.edu
+
+>>>>>>>> 68 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 69 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 70 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 71 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+[DNS Layer]: app: dns | domainName: www-inst.eecs.berkeley.edu
+
+>>>>>>>> 72 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: udp | externalIP: 8.8.8.8 | countryCode: us | valid: True
+[UDP Layer]: externalPort: 53
+
+>>>>>>>> 73 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51236 | seqNo: 1246506692 | AckNo: 89984002 | is_ACK: True | is_FIN: True | is_RST: False
+
+>>>>>>>> 74 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51236 | seqNo: 89984002 | AckNo: 1246506693 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 75 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 89921124 | AckNo: 3052381985 | is_ACK: True | is_FIN: True | is_RST: False
+
+>>>>>>>> 76 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51236 | seqNo: 89984002 | AckNo: 1246506693 | is_ACK: True | is_FIN: True | is_RST: False
+
+>>>>>>>> 77 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 3052381985 | AckNo: 89921125 | is_ACK: True | is_FIN: True | is_RST: False
+outgoing FIN , but don't have (2149643436L, 51235) connectionEntry
+
+>>>>>>>> 78 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51236 | seqNo: 1246506693 | AckNo: 89984003 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 79 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.244.172 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 51235 | seqNo: 89921125 | AckNo: 3052381986 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 80 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 89856602 | AckNo: 3141093238 | is_ACK: True | is_FIN: True | is_RST: False
+
+>>>>>>>> 81 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 3141093238 | AckNo: 89856603 | is_ACK: True | is_FIN: True | is_RST: False
+outgoing FIN , but don't have (2149591751L, 50317) connectionEntry
+
+>>>>>>>> 82 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50317 | seqNo: 89856603 | AckNo: 3141093239 | is_ACK: True | is_FIN: False | is_RST: False
+
+>>>>>>>> 83 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89798497 | AckNo: 3704038933 | is_ACK: True | is_FIN: True | is_RST: False
+
+>>>>>>>> 84 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: <---- PKT_DIR_OUTGOING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 3704038933 | AckNo: 89798498 | is_ACK: True | is_FIN: True | is_RST: False
+outgoing FIN , but don't have (2149591751L, 50316) connectionEntry
+
+>>>>>>>> 85 <<<<<<<<<<
+
+
+------------
+[IP Layer]: direction: ----> PKT_DIR_INCOMING | protocol: tcp | externalIP: 128.32.42.199 | countryCode: us | valid: True
+[TCP Layer]: externalPort: 80 | internalPort: 50316 | seqNo: 89798498 | AckNo: 3704038934 | is_ACK: True | is_FIN: False | is_RST: False

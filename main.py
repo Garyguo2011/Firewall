@@ -85,6 +85,7 @@ class PacketInterceptor:
             print >> sys.stderr, 'Cannot import the Firewall class from %s.py' \
                     % config['mode']
             sys.exit(1)
+        self.i = 0
 
     def setup_interfaces(self):
         self.iface_int = TAPInterface(self.IFNAME_INT)
@@ -164,8 +165,11 @@ class PacketInterceptor:
             #for i in range (0, len(pkt) + 1):
                 # print ("try: " + str(i))
                 #self.firewall.handle_packet(pkt_dir,pkt[0:i])
-                
+            # fptr = open("3b-firewall-test/packet " + str(self.i), "w")
+            # fptr.write(pkt)
+            # fptr.close()
             self.firewall.handle_packet(pkt_dir, pkt)
+            # self.i += 1
 
 def print_usage():
     print >> sys.stderr, 'Invalid commandline options!'

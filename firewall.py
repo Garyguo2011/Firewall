@@ -56,6 +56,7 @@ class Firewall:
         self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
         self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
         self.connectionsPool = TCPConnectionsPool(self.httpLogGenerator)
+        self.i = 0
         # except Exception:
             # pass
         # print(self.staticRulesPool)
@@ -71,7 +72,16 @@ class Firewall:
         if pkt == None or len(pkt) == 0:
             raise MalformError(MALFORM_PACKET + "1")
         archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
+        print "\n>>>>>>>> " + str(self.i) + " <<<<<<<<<<\n"
+        print (archive)
         # print (archive)
+        # file_ptr = open("dir-2/" + str(self.i) + "-pkt", "w")
+        # file_ptr.write(pkt)
+        # file_ptr.close()
+        # dir_ptr = open("dir-2/" + str(self.i) + "-dir", "w")
+        # dir_ptr.write(str(pkt_dir))
+        # dir_ptr.close()
+        self.i += 1
         if archive != None and archive.isValid():
             self.staticRulesPool.check(archive)
             # ++++++++++ Add for 3b ++++++++++++++++
@@ -79,7 +89,8 @@ class Firewall:
                 if self.is_http_traffic(archive):
                     self.connectionsPool.handle_TCP_packet(archive)
                 if archive.getVerdict() == PASS:
-                    self.send(pkt_dir, pkt)
+                    pass
+                    # self.send(pkt_dir, pkt)
         # except MalformError as e:
             # pass
         # except Exception as e:
@@ -451,6 +462,9 @@ class StaticRulesPool(object):
         output = ""
         for rule in self.rule_list[::-1]:
             output += rule.__str__() + "\n"
+        output += "======= LOG Rule =======\n"
+        for logrule in self.log_rule_list[::-1]:
+            output += logrule.__str__() + "\n"
         return output
 
 ##########################################################################################
@@ -910,8 +924,8 @@ class LogHttpRule(Rule):
         self.type = None
         self.postfix = None
         self.app =fieldList[1]
-
         content = fieldList[2]
+        self.parse_content(content)
 
     def parse_content(self, content):
         if len(content) == 0:
@@ -964,6 +978,23 @@ class LogHttpRule(Rule):
             return False
         else:
             return httpRequest.getHostName() == self.postfix
+
+    def __str__(self):
+        if self.type == LogHttpRule.IPADDRESS:
+            host_name = self.ip_int_to_str(self.postfix)
+        elif self.type == LogHttpRule.FULL:
+            host_name = self.postfix
+        else:
+            host_name = "*" + self.postfix
+        return "[%s Rule]: %s %s %s" % (LOG_STR, LOG_STR, self.app, host_name)
+
+    def ip_int_to_str(self, ipNum):
+        ipStrList = []
+        ipStrList.append((ipNum >> 24) & 255)
+        ipStrList.append((ipNum >> 16) & 255)
+        ipStrList.append((ipNum >> 8) & 255)
+        ipStrList.append((ipNum >> 0) & 255)
+        return "%d.%d.%d.%d" % (ipStrList[0], ipStrList[1], ipStrList[2], ipStrList[3])
 
 class TCPConnectionsPool(object):
     def __init__(self, logGenerator):
@@ -1196,6 +1227,13 @@ class HTTPHeader(object):
     def hasLogged(self):
         return self.log
 
+    def __str__(self):
+        result = ''
+        for i in range(0, len(inputStream)):
+            elem = chr(ord(inputStream[i:i+1]))
+            result = result + elem
+        return result
+
 class HTTPRequest(HTTPHeader):
     def __init__(self, archive):
         HTTPHeader.__init__(self)
@@ -1243,6 +1281,19 @@ class HTTPRespond(HTTPHeader):
                     temp = temp[1:]
                 self.object_size = int(temp)
 
-
-
-
+#####Flow Test#######################
+config = {}
+config['rule'] = 'flowtest.conf'
+firewall = Firewall(config, None, None)
+for i in range (0, 103):
+    file_ptr = open("dir-2/" + str(i) + "-pkt", "r")
+    pkt = file_ptr.read()
+    file_ptr.close()
+    dir_ptr = open("dir-2/" + str(i) + "-dir", "r")
+    direction = dir_ptr.read()
+    dir_ptr.close()
+    if direction == "1":
+        pkt_dir = PKT_DIR_OUTGOING
+    else:
+        pkt_dir = PKT_DIR_INCOMING
+    firewall.handle_packet(pkt_dir,pkt)
