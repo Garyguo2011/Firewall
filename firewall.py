@@ -1173,6 +1173,14 @@ class HTTPHeader(object):
                 self.parse_stream()
                 break
 
+    def stringGenerator(self, inputStream):
+        result = ''
+        for i in range(0, len(inputStream)):
+            elem = chr(ord(inputStream[i:i+1]))
+            result = result + elem
+        print result
+        return result.split('\r\n')
+
     def parse_stream(self):
         # Subclass need to overide this function
         pass
@@ -1213,12 +1221,12 @@ class HTTPRequest(HTTPHeader):
                 temp = temp[1:]
             self.host_name = temp
 
-    def stringGenerator(self, inputStream):
-        result = ''
-        for i in range(0, len(inputStream)):
-            elem = chr(ord(inputStream[i:i+1]))
-            result = result + elem
-        return result
+    # def stringGenerator(self, inputStream):
+    #     result = ''
+    #     for i in range(0, len(inputStream)):
+    #         elem = chr(ord(inputStream[i:i+1]))
+    #         result = result + elem
+    #     return result
 
     def getHostName():
         return self.host_name
@@ -1242,13 +1250,3 @@ class HTTPRespond(HTTPHeader):
                 while temp[0:1] == ' ':
                     temp = temp[1:]
                 self.object_size = int(temp)
-
-    def stringGenerator(self, inputStream):
-        result = ''
-        for i in range(0, len(inputStream)):
-            elem = chr(ord(inputStream[i:i+1]))
-            result = result + elem
-        return result.split('\r\n')
-
-
-
