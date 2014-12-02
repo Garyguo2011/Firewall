@@ -1107,6 +1107,7 @@ class TCPStreamBuffer(object):
                         self.queue.append(archive)
                     else:
                         pass
+        self.logGenerator.processBufferStream(self.getBuffer())
 
     def getBuffer(self):
         return self.queue
@@ -1133,7 +1134,7 @@ class HTTPLogGenerator(object):
         while i < bound:
             httpRequest = bufferStreamQueue[i]
             httpRespond = bufferStreamQueue[i + 1]
-            if not httpRequest.hasLogged() and not httpRespond.hasLogged():
+            if httpRequest.isComplete() and not httpRequest.hasLogged() and  httpRespond.isComplete() and not httpRespond.hasLogged():
                 self.handle_http_pair(httpRequest, httpRespond)
             i += 2
 
@@ -1174,6 +1175,7 @@ class HTTPHeader(object):
                 self.complete = True
                 self.stream = self.stream[0:i+4]
                 self.parse_stream()
+                break
 
     def parse_stream(self):
         # Subclass need to overide this function
