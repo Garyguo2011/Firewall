@@ -1218,7 +1218,7 @@ class HTTPRequest(HTTPHeader):
                 temp = line_arr[1]
                 while temp[0:1] == ' ':
                     temp = temp[1:]
-        self.host_name = temp
+                self.host_name = temp
 
 
     def getHostName():
@@ -1242,7 +1242,7 @@ class HTTPRespond(HTTPHeader):
                 temp = line_arr[1]
                 while temp[0:1] == ' ':
                     temp = temp[1:]
-        self.object_size = int(temp)
+                self.object_size = int(temp)
 
 
 
