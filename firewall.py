@@ -50,14 +50,14 @@ class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
-        try:
-            self.staticRulesPool = StaticRulesPool(config['rule'])
-            print(self.staticRulesPool)
-            self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
-            self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
-            self.connectionsPool = TCPConnectionsPool(self.httpLogGenerator)
-        except Exception:
-            pass
+        # try:
+        self.staticRulesPool = StaticRulesPool(config['rule'])
+        print(self.staticRulesPool)
+        self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
+        self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
+        self.connectionsPool = TCPConnectionsPool(self.httpLogGenerator)
+        # except Exception:
+            # pass
         # print(self.staticRulesPool)
         # TODO: Load the firewall rules (from rule_filename) here.
         # TODO: Load the GeoIP DB ('geoipdb.txt') as well.
@@ -804,7 +804,7 @@ class DenyTCPRule(GeneralRule):
         return result
 
     def __str__(self):
-        return "[DenyTCPRule] ->" + GeneralRule.__init__(self)
+        return "[TCP DENY Rule] -> " + GeneralRule.__str__(self)
 
 class DenyDNSRule(DNSRule):
     def __init__(self, fieldList):
@@ -893,7 +893,7 @@ class DenyDNSRule(DNSRule):
         return struct.pack('!H', result)
 
     def __str__(self):
-        return "[DenyDNSRule] -> " + DNSRule.__str__(self)
+        return "[DNS DENY Rule] -> " + DNSRule.__str__(self)
 
 ##########################################################################################
 ######################## httpLog.py  #####################################################
