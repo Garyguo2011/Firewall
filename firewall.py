@@ -1169,7 +1169,7 @@ class HTTPHeader(object):
             asciiStr = chr(ord(substring[0])) + chr(ord(substring[1])) + chr(ord(substring[2])) + chr(ord(substring[3]))
             if asciiStr == "\r\n\r\n":
                 self.complete = True
-                self.stream = self.stream[0:i+4]
+                self.stream = self.stream[0:i]
                 self.parse_stream()
                 break
 
@@ -1178,7 +1178,6 @@ class HTTPHeader(object):
         for i in range(0, len(inputStream)):
             elem = chr(ord(inputStream[i:i+1]))
             result = result + elem
-        print result
         return result.split('\r\n')
 
     def parse_stream(self):
