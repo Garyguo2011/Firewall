@@ -72,14 +72,12 @@ class Firewall:
             raise MalformError(MALFORM_PACKET + "1")
         archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
         print (archive)
-        self.send(pkt_dir, pkt)
         if archive != None and archive.isValid():
             self.staticRulesPool.check(archive)
-            # if self.staticRulesPool.check(archive) == PASS:
             # ++++++++++ Add for 3b ++++++++++++++++
             if archive.getVerdict() == PASS:
-                # if self.is_http_traffic(archive):
-                #     self.connectionsPool.handle_packet(archive)
+                if self.is_http_traffic(archive):
+                    self.connectionsPool.handle_TCP_packet(archive)
                 if archive.getVerdict() == PASS:
                     self.send(pkt_dir, pkt)
         # except MalformError as e:
@@ -635,7 +633,7 @@ class TCPArchive (Archive):
     def getAckNo(self):
         return self.ackno
 
-    def getData():
+    def getData(self):
         # impelemtaiton
         return self.data
 
@@ -998,13 +996,13 @@ class TCPConnectionsPool(object):
                 if self.connectionPool[connectionKey].handle_Outgoing_SYN(archive) == PASS:
                     del self.connectionPool[connectionKey]
             else:
-                print "outgoing FIN , but don't have %s connectionEntry" % connectionKey
+                print "outgoing FIN , but don't have %s connectionEntry" % str(connectionKey)
         # handle incomming RST
         elif archive.getDirection() == PKT_DIR_INCOMING and (archive.is_RST() or archive.is_FIN()):
             if connectionKey in self.connectionPool:
                 del self.connectionPool[connectionKey]
             else:
-                print "%s have already deleted" % connectionKey
+                print "%s have already deleted" % str(connectionKey)
         # handle normal packet
         else:
             if connectionKey in self.connectionPool:
@@ -1191,8 +1189,6 @@ class HTTPHeader(object):
     def hasLogged(self):
         return self.log
 
-        
-
 class HTTPRequest(HTTPHeader):
     def __init__(self, archive):
         HTTPHeader.__init__(self)
@@ -1205,6 +1201,7 @@ class HTTPRequest(HTTPHeader):
     def parse_stream(self):
         stream_str_arr = self.stringGenerator(self.stream)
         first_line, second_line = stream_str_arr[0], stream_str_arr[1]
+        print first_line
         first_line_arr = first_line.split(' ')
         self.method = first_line_arr[0]
         self.path = first_line_arr[1]
