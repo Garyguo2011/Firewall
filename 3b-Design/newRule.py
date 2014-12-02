@@ -4,16 +4,9 @@ import time
 from main import PKT_DIR_INCOMING, PKT_DIR_OUTGOING
 
 
-class DenyTCPRule(Rule):
+class DenyTCPRule(GeneralRule):
     def __init__(self, fieldList):
-        Rule.__init__(self, DROP_STR)
-        # Gary will fill the parse algorithm
-
-    def matches(self, archive):
-        # Return bool (Match: True / Don't Match: False)
-        # Assume you have already know this infomation
-        # Gary will fill the match algorihtm
-        pass
+        GeneralRule.__init__(self, fieldList)
 
     def handle(self, archive):
         # Assume the archive you receive is TCPArchive
@@ -67,20 +60,13 @@ class DenyTCPRule(Rule):
         checksumStr = self.checksum(buf, len(buf))
         result = result + srcPortStr + dstPortStr + seqNoStr + ackNoStr + orStr + tcpfStr + windowStr + checksumStr + upStr
         return result
-        
 
+    def __str__(self):
+        return "[DenyTCPRule] ->" + GeneralRule.__init__(self)
 
-
-
-class DenyDNSRule(Rule):
+class DenyDNSRule(DNSRule):
     def __init__(self, fieldList):
-        Rule.__init__(self, DROP_STR)
-        # Gary will fill the parse algorithm
-
-    def matches(self, archive):
-        # Return bool (Match: True / Don't Match: False)
-        # Assume you have already know this infomation
-        # Gary will fill the match algorihtm
+        DNSRule.__init__(self, fieldList)
 
     def handle(self, archive):
         # Assume the archive you receive is TCPArchive
@@ -163,4 +149,7 @@ class DenyDNSRule(Rule):
             result = (result & 65535) + (result >> 16)
         result = result ^ 0xffff
         return struct.pack('!H', result)
+
+    def __str__(self):
+        return "[DenyDNSRule] -> " + DNSRule.__str__(self)
 

@@ -12,10 +12,15 @@ import time
 
 LETTER = "abcdefghijklmnopqrstuvwxyz"
 
+
 PASS = True
 DROP = False
 PASS_STR = "pass"
 DROP_STR = "drop"
+
+DENY_STR = "deny"
+LOG_STR = "log"
+
 
 TCP_PROTOCOL = "tcp"
 TCP_PROTOCOL_NUM = 6
@@ -24,6 +29,9 @@ UDP_PROTOCOL_NUM = 17
 ICMP_PROTOCOL = "icmp"
 ICMP_PROTOCOL_NUM = 1
 DNS_APP = "dns"
+HTTP_APP = "http"
+
+HTTP_PORT = 80
 
 ANY = "any"
 MAX_PORTNUM = 65535
@@ -32,6 +40,7 @@ DEFAULT_POLICY = PASS
 DEBUG = False
 
 GEOIPDB_FILE = 'geoipdb.txt'
+HTTP_LOG_FILE = 'http.log'
 
 MALFORM_PACKET = "MALFORM PACKET"
 DNS_PARSE_ERROR = "**DNS MALFORM**"
@@ -44,6 +53,8 @@ class Firewall:
         try:
             self.staticRulesPool = StaticRulesPool(config['rule'])
             self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
+            self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
+            self.connectionsPool = TCPConnectionsPool(self.httpLogGenerator)
         except Exception:
             pass
         # print(self.staticRulesPool)
@@ -62,12 +73,22 @@ class Firewall:
             if archive != None and archive.isValid():
                 self.staticRulesPool.check(archive)
                 # if self.staticRulesPool.check(archive) == PASS:
+                # ++++++++++ Add for 3b ++++++++++++++++
                 if archive.getVerdict() == PASS:
-                    self.send(pkt_dir, pkt)
+                    if self.is_http_traffic(archive):
+                        self.connectionsPool.handle_packet(archive)
+                    if archive.getVerdict() == PASS:
+                        self.send(pkt_dir, pkt)
         except MalformError as e:
             pass
         except Exception as e:
             pass
+
+    def is_http_traffic(self, archive):
+        if type(archive) == TCPArchive and archive.getExternalPort() == HTTP_PORT:
+            return True
+        else:
+            return False
 
     # TODO: You can add more methods as you want.
     #################### bypass_phase1.py ########################
@@ -157,7 +178,7 @@ class Rule(object):
         # self.index = index                  # record where did the rule occur in conf file
         if verdictStr == PASS_STR:
             self.verdict = PASS              # [1: pass 0: drop]
-        else:
+        elif verdictStr == DROP_STR or verdictStr == DENY_STR:
             self.verdict = DROP
 
     def __str__(self):
@@ -350,13 +371,17 @@ class DNSRule(Rule):
 class StaticRulesPool(object):
     def __init__(self, conffile):
         self.rule_list = []
+        self.log_rule_list = []
         try:
             fptr = open (conffile)
             buf = fptr.readline()
             while buf != "" :
                 rule = self.parseBuffer(buf)
                 if rule:
-                    self.add(rule)
+                    if type(rule) == LogHttpRule:
+                        self.add_log_rule(rule)
+                    else:
+                        self.add(rule)
                 buf = fptr.readline()
         except IOError:
             # print ("'%s' does not exist: use default pass" % (conffile))
@@ -368,11 +393,21 @@ class StaticRulesPool(object):
         fieldList = buf.lower().split("%")[0].split("\n")[0].split()
         if len(fieldList) < 3 or len(fieldList) > 4:
             return None
-        ruleType = fieldList[1]
-        if (ruleType == ICMP_PROTOCOL or ruleType == UDP_PROTOCOL or ruleType == TCP_PROTOCOL) and len(fieldList) == 4:
-            return GeneralRule(fieldList)
-        elif ruleType == DNS_APP and len(fieldList) == 3:
-            return DNSRule(fieldList)
+
+        if fieldList[0] == DENY_STR:
+            if fieldList[1] == TCP_PROTOCOL and len(fieldList) == 4:
+                return DenyTCPRule(fieldList)
+            elif fieldList[1] == DNS_APP and len(fieldList) == 3:
+                return DenyDNSRule(fieldList)
+        elif fieldList[0] == LOG_STR:
+            if fieldList[1] == HTTP_APP and len(fieldList) == 3:
+                return LogHttpRule(fieldList)
+        elif fieldList[0] == PASS_STR or fieldList[0] == DROP_STR:
+            ruleType = fieldList[1]
+            if (ruleType == ICMP_PROTOCOL or ruleType == UDP_PROTOCOL or ruleType == TCP_PROTOCOL) and len(fieldList) == 4:
+                return GeneralRule(fieldList)
+            elif ruleType == DNS_APP and len(fieldList) == 3:
+                return DNSRule(fieldList)
         else:
             return None
     
@@ -381,9 +416,13 @@ class StaticRulesPool(object):
             # Save a reverse configuration rule
             self.rule_list.insert(0, rule)
 
+    def add_log_rule(self, rule):
+        if type(rule) == LogHttpRule:
+            self.log_rule_list.insert(0, rule)
+
     def check(self, archive):
         if self.isEmpty():
-            return DEFAULT_POLICY
+            archive.setVerdict(PASS)
         for rule in self.rule_list:
             if rule.matches(archive):
                 # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
@@ -393,9 +432,13 @@ class StaticRulesPool(object):
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     def matchLogRules(self, httpRequest):
-        # true if there is a match
-        # false otherwise
+        if len(self.log_rule_list) == 0:
+            return False
 
+        for logrule in self.log_rule_list:
+            if logrule.matches(httpRequest):
+                return True
+        return False
 
     def isEmpty(self):
         return len(self.rule_list) == 0
