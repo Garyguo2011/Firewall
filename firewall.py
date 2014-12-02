@@ -801,20 +801,24 @@ class DenyTCPRule(GeneralRule):
         result = vihlStr + tosStr + tlStr + idStr + ipffoStr + ttlStr + protocolStr + checksumStr + srcAddrStr + dstAddrStr
         # generating tcp header
         ipLength = (15 & ord(original[0:1])) * 4
-        buf = result
         srcPortStr = original[ipLength+2:ipLength+4]    # source port 
         dstPortStr = original[ipLength:ipLength+2]    # destination port
-        seqNo = struct.unpack('L', original[ipLength+4:ipLength+8])[0]
-        seqNoStr = struct.pack('L', seqNo)    # sequence number
-        ackNoStr = struct.pack('L', 0)    # acknowledge number
+        seqNo = struct.unpack('!L', original[ipLength+4:ipLength+8])[0]
+        seqNoStr = struct.pack('!L', seqNo)    # sequence number
+        ackNoStr = struct.pack('!L', seqNo + 1)    # acknowledge number
         orStr = chr(5 << 4)    # offset + reserved
         tcpfStr = chr(20)    # tcp flags with ACK and RST set
-        windowStr = struct.pack('H', 0)    # window
-        upStr = struct.pack('H', 0)    # urgent pointer
-        buf = buf + srcPortStr + dstPortStr + seqNoStr + ackNoStr + orStr + tcpfStr + windowStr + upStr
+        windowStr = struct.pack('!H', 0)    # window
+        upStr = struct.pack('!H', 0)    # urgent pointer
+        # checksum
+        pseudo_header = srcAddrStr + dstAddrStr + struct.pack('!H', 6) + struct.pack('!H', 20)
+        buf =  pseudo_header + srcPortStr + dstPortStr + seqNoStr + ackNoStr + orStr + tcpfStr + windowStr + upStr
         checksumStr = self.checksum(buf, len(buf))
-        result = result + srcPortStr + dstPortStr + seqNoStr + ackNoStr + orStr + tcpfStr + windowStr + checksumStr + upStr
+        result = result + srcPortStr + dstPortStr
+        result = result + seqNoStr + ackNoStr
+        result = result + orStr + tcpfStr + windowStr + checksumStr + upStr
         return result
+
 
     def __str__(self):
         return "[TCP DENY Rule] -> " + GeneralRule.__str__(self)
