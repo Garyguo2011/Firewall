@@ -127,49 +127,97 @@ class TCPStreamBuffer(object):
 
     def handle_new_stream(self, archive):
         self.add_to_stream(archive)
-        if len(self.queue) == 2 and \
-           type(self.queue[0]) == HTTPRequest and self.queue[0].isComplete() and \
-           type(self.queue[1]) == HTTPRespond and self.queue[1].isComplete():
-            return self.queue[0], self.queue[1]
-        else:
-            return None
+        self.logGenerator.processBufferStream(self.getBuffer())
 
     def add_to_stream(self, archive):
+        if len(self.queue) == 0:
+            if archive.getDirection() == PKT_DIR_OUTGOING:
+                httpRequest = HTTPRequest(archive)
+                self.queue.append(httpRequest)
+        else:
+            if type(self.tail()) == HTTPRequest:
+                if archive.getDirection() == PKT_DIR_OUTGOING:
+                    self.tail().append_to_tail(archive)
+                else:
+                    if archive.getDataSize() != 0:
+                        httpRespond = HTTPRespond(archive)
+                        self.queue.append(httpRespond)
+                    else:
+                        pass
+            elif type(self.tail()) == HTTPRespond:
+                if archive.getDirection() == PKT_DIR_INCOMING:
+                    self.tail().append_to_tail(archive)
+                else:
+                    if archive.getDataSize() != 0:
+                        httpRequest = HTTPRequest(archive)
+                        self.queue.append(archive)
+                    else:
+                        pass
+
+    def getBuffer(self):
+        return self.queue
+
+    def tail(self):
+        return self.queue[-1]
 
 # ===================== HTTP Log Class ==================
 
 class HTTPLogGenerator(object):
     def __init__(self, logfileName, staticRulesPool):
         self.logfileptr = open(logfileName, 'a')
-        self.logRulesPool = staticRulesPool
+        self.staticRulesPool = staticRulesPool
+
+    def processBufferStream(self, bufferStreamQueue):
+        if len(bufferStreamQueue) == 0 or len(bufferStreamQueue) == 1:
+            return
+
+        if len(bufferStreamQueue) % 2 == 1:
+            bound = len(bufferStreamQueue) - 1
+        else:
+            bound = len(bufferStreamQueue)
+
+        i = 0
+        while i < bound:
+            httpRequest = bufferStreamQueue[i]
+            httpRespond = bufferStreamQueue[i + 1]
+            if not httpRequest.hasLogged() and not httpRespond.hasLogged():
+                self.handle_http_pair(httpRequest, httpRespond)
+            i += 2
 
     def handle_http_pair(self, httpRequest, httpRespond):
         if self.staticRulesPool.matchLogRules(httpRequest):
             # write to log
-            logEntry = "%s %s %s %s %s %s\n" % \
-                       (httpRequest.host_name, httpRequest.method, httpRequest.path, httpRequest.version, \
-                        httpRespond.status_code, httpRespond.object_size)
-            self.logfileptr.flush()
-            self.logfileptr.write(logEntry)
-            self.logfileptr.flush()
+            if self.staticRulesPool.matchLogRules(httpRequest):
+                httpRequest.setLog()
+                httpRespond.setLog()
+                logEntry = "%s %s %s %s %s %s\n" % \
+                           (httpRequest.host_name, httpRequest.method, httpRequest.path, httpRequest.version, \
+                            httpRespond.status_code, httpRespond.object_size)
+                self.logfileptr.flush()
+                self.logfileptr.write(logEntry)
+                self.logfileptr.flush()
 
 # ===================== HTTP Header Class ==================
 
 class HTTPRequest(HTTPHeader):
     def __init__(self, archive):
+        HTTPHeader.__init__(self)
         self.host_name = archive.getExternalIP()
         self.method = ""
         self.path = ""
         self.version = ""
+        self.append_to_tail(archive)
     
     def parse_stream(self):
         pass
 
 class HTTPRespond(HTTPHeader):
     def __init__(self, archive):
+        HTTPHeader.__init__(self)
         self.complete = False
         self.status_code = ""
         self.object_size = -1
+        self.append_to_tail(archive)
 
     def parse_stream(self):
         pass
@@ -178,18 +226,25 @@ class HTTPHeader(object):
     def __init__(self):
         self.complete = False
         self.stream = ""
+        self.log = False
 
     def append_to_tail(self, archive):
         if self.complete == False:
-            self.stream += self.get_tcp_payload(archive)
+            self.stream += archive.getData()
             self.check_complete()
-
-    def get_tcp_payload(self, archive):
-        # return None if no data
 
     def check_complete(self):
         # Search entire stream see if "\r\n" has occur
         # if so, set complete = True and call parse_stream()
+        if len(self.stream) < 4:
+            return
+        for i in range(0, len(self.stream) - 3):
+            substring = self.stream[i:i+4]
+            asciiStr = chr(ord(substring[0])) + chr(ord(substring[1])) + chr(ord(substring[2])) + chr(ord(substring[3]))
+            if asciiStr == "\r\n\r\n":
+                self.complete = True
+                self.stream = self.stream[0:i+4]
+                self.parse_stream()
 
     def parse_stream(self):
         # Subclass need to overide this function
@@ -200,3 +255,9 @@ class HTTPHeader(object):
 
     def getStream(self):
         return self.stream
+
+    def setLog(self):
+        self.log = True
+
+    def hasLogged(self):
+        return self.log
