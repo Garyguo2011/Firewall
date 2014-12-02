@@ -2,18 +2,67 @@ class LogHttpRule(Rule):
     FULL = 0
     WILDCARD = 1
     IPADDRESS = 2
+    IPCHAR = "0123456789."
     
     def __init__(self, fieldList):
         Rule.__init__(self, PASS_STR)
-        self.type
+        self.type 
         self.postfix
-        self.app
+        self.app =fieldList[1]
 
-    def matches(self, archive):
-        pass
+        content = fieldList[2]
 
-    def handle(self, archive):
-        pass
+    def parse_content(self, content):
+        if len(content) == 0
+            print "Pase Error: DNS Don't have content"
+            pass
+        elif len(content) == 1 and content[0] == "*":
+            self.type = LogHttpRule.WILDCARD
+            self.postfix = ""
+        elif len(content) >=2 and content[0:2] == "*.":
+            self.type = LogHttpRule.WILDCARD
+            self.postfix = content[1:]
+        else:
+            if self.is_IP_address(content):
+                self.type = LogHttpRule.IPADDRESS
+                self.postfix = self.ip_str_to_int(content)
+            else:
+                self.type = LogHttpRule.FULL
+                self.postfix = content
+
+    def ip_str_to_int(self, ipStr):
+        fieldList = ipStr.split(".")
+        if len (fieldList) == 4:
+            result = (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
+            return (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
+        else:
+            pass
+            # print ("Syntax Error: " + ipStr)
+
+    def is_IP_address(self, content):
+        for i in content:
+            if not i in LogHttpRule.IPCHAR:
+                return False
+        fieldList = content.split(".")
+        if len(fieldList) == 4:
+            return True
+        return False
+
+    def matches(self, httpRequest):
+        if self.type == LogHttpRule.WILDCARD and len(self.postfix) == 0:
+            return True
+        if self.type == LogHttpRule.IPADDRESS:
+            if self.is_IP_address(httpRequest.getHostName()):
+                return self.ip_str_to_int(HTTPRequest.getHostName()) == self.postfix
+            else:
+                return False
+        elif self.type == LogHttpRule.WILDCARD:
+            for i in range(0, len(httpRequest.getHostName())):
+                if httpRequest.getHostName()[i:] == self.postfix:
+                    return True
+            return False
+        else:
+            return httpRequest.getHostName() == self.postfix
 
 class TCPConnectionsPool(object):
     def __init__(self, logGenerator):
@@ -175,7 +224,6 @@ class HTTPLogGenerator(object):
             bound = len(bufferStreamQueue) - 1
         else:
             bound = len(bufferStreamQueue)
-
         i = 0
         while i < bound:
             httpRequest = bufferStreamQueue[i]
@@ -229,6 +277,9 @@ class HTTPRequest(HTTPHeader):
             result = result + elem
         return result
 
+    def getHostName():
+        return self.host_name
+
 class HTTPRespond(HTTPHeader):
     def __init__(self, archive):
         HTTPHeader.__init__(self)
@@ -248,7 +299,6 @@ class HTTPRespond(HTTPHeader):
                 while temp[0:1] == ' ':
                     temp = temp[1:]
                 self.object_size = int(temp)
-
 
     def stringGenerator(self, inputStream):
         result = ''
