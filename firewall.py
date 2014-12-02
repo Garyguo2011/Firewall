@@ -413,7 +413,7 @@ class StaticRulesPool(object):
             return None
     
     def add(self, rule):
-        if type(rule) in [GeneralRule, DNSRule]:
+        if type(rule) in [GeneralRule, DNSRule, DenyDNSRule, DenyTCPRule]:
             # Save a reverse configuration rule
             self.rule_list.insert(0, rule)
 
@@ -1207,25 +1207,19 @@ class HTTPRequest(HTTPHeader):
     
     def parse_stream(self):
         stream_str_arr = self.stringGenerator(self.stream)
-        first_line, second_line = stream_str_arr[0], stream_str_arr[1]
-        print first_line
+        first_line= stream_str_arr[0]
         first_line_arr = first_line.split(' ')
         self.method = first_line_arr[0]
         self.path = first_line_arr[1]
         self.version = first_line_arr[2] 
-        second_line_arr = second_line.split(':')
-        if second_line_arr[0] == 'Host' and len(second_line_arr) == 2:
-            temp = second_line_arr[1]
-            while temp[0:1] == ' ':
-                temp = temp[1:]
-            self.host_name = temp
+        for i in range(0, len(stream_str_arr)):
+            line_arr = stream_str_arr[i].split(':')
+            if line_arr[0] == 'Host' and len(line_arr) == 2:
+                temp = line_arr[1]
+                while temp[0:1] == ' ':
+                    temp = temp[1:]
+        self.host_name = temp
 
-    # def stringGenerator(self, inputStream):
-    #     result = ''
-    #     for i in range(0, len(inputStream)):
-    #         elem = chr(ord(inputStream[i:i+1]))
-    #         result = result + elem
-    #     return result
 
     def getHostName():
         return self.host_name
@@ -1244,8 +1238,12 @@ class HTTPRespond(HTTPHeader):
         self.status_code = first_line_arr[1]
         for i in range(0, len(stream_str_arr)):
             line_arr = stream_str_arr[i].split(':')
-            if line_arr[0] == 'Content-Length':
+            if line_arr[0] == 'Content-Length' and len(line_arr) == 2:
                 temp = line_arr[1]
                 while temp[0:1] == ' ':
                     temp = temp[1:]
-                self.object_size = int(temp)
+        self.object_size = int(temp)
+
+
+
+
