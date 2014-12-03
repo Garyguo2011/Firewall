@@ -1,4 +1,3 @@
-
 www-inst.eecs.berkeley.edu GET /~cs168/fa14 HTTP/1.1 301 254
 www-inst.eecs.berkeley.edu GET /~cs168/fa14/ HTTP/1.1 200 273
 www-inst.eecs.berkeley.edu GET /~cs168/fa14/content.html HTTP/1.1 200 1569
@@ -7,29 +6,3 @@ www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Book.png HTTP/1.1 200 174
 www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Keycard_A.png HTTP/1.1 200 324
 www.eecs.berkeley.edu GET /Includes/EECS-images/eecslogo.gif HTTP/1.1 200 828
 www-inst.eecs.berkeley.edu GET /favicon.ico HTTP/1.1 200 0
-www-inst.eecs.berkeley.edu GET /~cs168/fa14 HTTP/1.1 301 254
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/ HTTP/1.1 200 273
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/content.html HTTP/1.1 200 1569
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/overview.html HTTP/1.1 200 2581
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Book.png HTTP/1.1 200 174
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Keycard_A.png HTTP/1.1 200 324
-www.eecs.berkeley.edu GET /Includes/EECS-images/eecslogo.gif HTTP/1.1 200 828
-www-inst.eecs.berkeley.edu GET /favicon.ico HTTP/1.1 200 0
-www-inst.eecs.berkeley.edu GET /~cs168/fa14 HTTP/1.1 301 254
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/ HTTP/1.1 200 273
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/content.html HTTP/1.1 200 1569
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/overview.html HTTP/1.1 200 2581
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Book.png HTTP/1.1 200 174
-www-inst.eecs.berkeley.edu GET /~cs168/fa14/images/Keycard_A.png HTTP/1.1 200 324
-www.eecs.berkeley.edu GET /Includes/EECS-images/eecslogo.gif HTTP/1.1 200 828
-www-inst.eecs.berkeley.edu GET /favicon.ico HTTP/1.1 200 0
-www-inst.eecs.berkeley.edu GET / HTTP/1.1 200 4547
-www-inst.eecs.berkeley.edu GET /images/iesg1.jpg HTTP/1.1 200 15173
-www-inst.eecs.berkeley.edu GET /images/new.gif HTTP/1.1 200 157
-www-inst.eecs.berkeley.edu GET /images/favicon.ico HTTP/1.1 200 894
-start.ubuntu.com GET /14.04/Google/?sourceid=hp HTTP/1.1 200 1872
-start.ubuntu.com GET /12.04/sprite.png HTTP/1.1 200 23678
-www.berkeley.edu GET / HTTP/1.1 200 -1
-thecatapi.com GET /api/images/get?format=src&type=gif HTTP/1.1 302 0
-25.media.tumblr.com GET /tumblr_ljwz4oZ2sy1qh28hmo1_400.gif HTTP/1.1 200 492820
-www.berkeley.edu GET /favicon.ico HTTP/1.1 200 -1

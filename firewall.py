@@ -10,6 +10,15 @@ import socket
 import struct
 import time
 
+
+# Remove Latter
+#================================
+import sys
+import subprocess
+TESTCASE = True
+PRINT_ARCHIVE = False
+#================================
+
 LETTER = "abcdefghijklmnopqrstuvwxyz"
 
 
@@ -39,6 +48,7 @@ MAX_PORTNUM = 65535
 DEFAULT_POLICY = PASS
 DEBUG = False
 
+
 GEOIPDB_FILE = 'geoipdb.txt'
 HTTP_LOG_FILE = 'http.log'
 
@@ -52,7 +62,8 @@ class Firewall:
         self.iface_ext = iface_ext
         # try:
         self.staticRulesPool = StaticRulesPool(config['rule'], self.send)
-        print(self.staticRulesPool)
+        if PRINT_ARCHIVE:
+            print(self.staticRulesPool)
         self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
         self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
         self.connectionsPool = TCPConnectionsPool(self.httpLogGenerator)
@@ -89,14 +100,15 @@ class Firewall:
                 if self.is_http_traffic(archive):
                     self.connectionsPool.handle_TCP_packet(archive)
                 if archive.getVerdict() == PASS:
-                    pass
-                    # self.send(pkt_dir, pkt)
+                    if not TESTCASE:
+                        self.send(pkt_dir, pkt)
         # except MalformError as e:
             # pass
         # except Exception as e:
             # pass
-        print ("\n--> Packet NO: [%d]" % (self.i + 5))
-        print self.connectionsPool
+        if PRINT_ARCHIVE:
+            print ("\n--> Packet NO: [%d]" % (self.i + 5))
+            print self.connectionsPool
 
     def is_http_traffic(self, archive):
         if type(archive) == TCPArchive and archive.getExternalPort() == HTTP_PORT:
@@ -108,7 +120,12 @@ class Firewall:
     #################### bypass_phase1.py ########################
 
     def packet_allocator(self, pkt_dir, pkt, countryCodeDict):
-        self.malformCheck(pkt_dir, pkt)
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # self.malformCheck(pkt_dir, pkt)
         protocolNumber = ord(pkt[9:10]) # parse pkt and get protocol
         if protocolNumber == TCP_PROTOCOL_NUM:
             return TCPArchive(pkt_dir, pkt, self.countryCodeDict)
@@ -658,9 +675,6 @@ class TCPArchive (Archive):
     def is_SYN(self):
         return (ord(self.getPacket()[self.ipLength + 13: self.ipLength + 14]) & 2) == 2
 
-    def is_ACK(self):
-        return (ord(self.getPacket()[self.ipLength + 13: self.ipLength + 14]) & 16) == 16
-
     def is_FIN(self):
         return (ord(self.getPacket()[self.ipLength + 13: self.ipLength + 14]) & 1) == 1
 
@@ -668,8 +682,8 @@ class TCPArchive (Archive):
         return (ord(self.getPacket()[self.ipLength + 13: self.ipLength + 14]) & 4) == 4
 
     def __str__(self):
-        return Archive.__str__(self) + "\n" + "[TCP Layer]: externalPort: %d | internalPort: %d | seqNo: %d | AckNo: %d | is_ACK: %s | is_FIN: %s | is_RST: %s" % \
-                                                    (self.externalPort, self.internalPort, self.seqno, self.ackno, self.is_ACK(), self.is_FIN(), self.is_RST())
+        return Archive.__str__(self) + "\n" + "[TCP Layer]: externalPort: %d | internalPort: %d | seqNo: %d | AckNo: %d | is_SYN: %s | is_FIN: %s | is_RST: %s" % \
+                                                    (self.externalPort, self.internalPort, self.seqno, self.ackno, self.is_SYN(), self.is_FIN(), self.is_RST())
 
 class UDPArchive (Archive):
     def __init__(self, pkt_dir, pkt, countryCodeDict):
@@ -973,7 +987,9 @@ class LogHttpRule(Rule):
         if self.type == LogHttpRule.WILDCARD and len(self.postfix) == 0:
             return True
         if self.type == LogHttpRule.IPADDRESS:
-            if self.is_IP_address(httpRequest.getHostName()):
+            if type(httpRequest.getHostName()) == int:
+                return self.getHostName() == self.postfix
+            elif type(httpRequest.getHostName()) == str and self.is_IP_address(httpRequest.getHostName()):
                 return self.ip_str_to_int(HTTPRequest.getHostName()) == self.postfix
             else:
                 return False
@@ -1028,18 +1044,10 @@ class TCPConnectionsPool(object):
             else:
                 print "SYN_ACK happen before SYN"
         # hanlde outgoing FIN or RST
-        elif archive.getDirection() == PKT_DIR_OUTGOING and archive.is_FIN():
+        elif archive.is_FIN() or archive.is_RST():
             if connectionKey in self.connectionPool:
-                if self.connectionPool[connectionKey].handle_Outgoing_SYN(archive) == PASS:
+                if self.connectionPool[connectionKey].handle_FIN_or_RESET(archive) == PASS:
                     del self.connectionPool[connectionKey]
-            else:
-                print "outgoing FIN , but don't have %s connectionEntry" % str(connectionKey)
-        # handle incomming RST
-        elif archive.getDirection() == PKT_DIR_INCOMING and (archive.is_RST() or archive.is_FIN()):
-            if connectionKey in self.connectionPool:
-                del self.connectionPool[connectionKey]
-            else:
-                print "%s have already deleted" % str(connectionKey)
         # handle normal packet
         else:
             if connectionKey in self.connectionPool:
@@ -1073,13 +1081,21 @@ class ConnectionEntry(object):
     def handle_Incomming_SYN(self, archive):
         self.incommingExpect = archive.getSeqNo() + 1
 
-    def handle_Outgoing_FIN(self, archive):
-        if self.compare(archive.getSeqNo(), self.outgoingExpect) > 0:
-            archive.setVerdict(DROP)
-            return DROP
+    def handle_FIN_or_RESET(self, archive):
+        if archive.getDirection() == PKT_DIR_OUTGOING:
+            if self.compare(archive.getSeqNo(), self.outgoingExpect) > 0:
+                archive.setVerdict(DROP)
+                return DROP
+            else:
+                archive.setVerdict(PASS)
+                return PASS
         else:
-            archive.setVerdict(PASS)
-            return PASS
+            if self.compare(archive.getSeqNo(), self.incommingExpect) > 0:
+                archive.setVerdict(DROP)
+                return DROP
+            else:
+                archive.setVerdict(PASS)
+                return PASS
 
     def handle_normal_packet(self, archive):
         assert type(archive) == TCPArchive, "archive is not TCPArchive"
@@ -1313,20 +1329,3 @@ class HTTPRespond(HTTPHeader):
                 while temp[0:1] == ' ':
                     temp = temp[1:]
                 self.object_size = int(temp)
-
-################ Flow Test #######################
-config = {}
-config['rule'] = 'flowtest.conf'
-firewall = Firewall(config, None, None)
-for i in range (0, 103):
-    file_ptr = open("dir-2/" + str(i) + "-pkt", "r")
-    pkt = file_ptr.read()
-    file_ptr.close()
-    dir_ptr = open("dir-2/" + str(i) + "-dir", "r")
-    direction = dir_ptr.read()
-    dir_ptr.close()
-    if direction == "1":
-        pkt_dir = PKT_DIR_OUTGOING
-    else:
-        pkt_dir = PKT_DIR_INCOMING
-    firewall.handle_packet(pkt_dir,pkt)

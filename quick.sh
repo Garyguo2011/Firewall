@@ -1,4 +1,4 @@
-echo "pass"
+echo "pass curl https://www.google.com > $$; rm $$;"
 curl https://www.google.com > $$; rm $$;
 
 echo "drop"
