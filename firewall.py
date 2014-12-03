@@ -1063,16 +1063,16 @@ class ConnectionEntry(object):
     def compare(self, seqNo, expectNo):
         if expectNo == None:
             return 0
-        if expectNo + ((2**32) / 2) > 2**32:
-            wrapUpperBound = (expectNo + ((2**32)/2)) % (2**32)
-            if seqNo > expectNo or (seqNo > 0 and seqNo < wrapUpperBound):
+        upperBound = (expectNo + ((2**32)/2)) % (2**32) 
+        if expectNo + ((2**32) / 2) >= 2**32:
+            if ((seqNo > expectNo) and (seqNo <= 2**32 -1)) or (seqNo >= 0 and seqNo < upperBound):
                 return 1
             elif seqNo == expectNo:
                 return 0
             else:
                 return -1
         else:
-            if seqNo > expectNo:
+            if (seqNo > expectNo) and (seqNo < upperBound):
                 return 1
             elif seqNo == expectNo:
                 return 0
