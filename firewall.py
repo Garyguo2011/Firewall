@@ -47,16 +47,11 @@ MALFORM_PACKET = "MALFORM PACKET"
 DNS_PARSE_ERROR = "**DNS MALFORM**"
 ERROR_HAPPEN = -1
 
-testPart12 = True
-testPart12 = False
-
 class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         try:
-            if testPart12:
-                config['rule'] = 'part12_b'
             self.staticRulesPool = StaticRulesPool(config['rule'], self.send)
             self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
             self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
