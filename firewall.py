@@ -933,10 +933,10 @@ class LogHttpRule(Rule):
         if self.type == LogHttpRule.WILDCARD and len(self.postfix) == 0:
             return True
         if self.type == LogHttpRule.IPADDRESS:
-            if type(httpRequest.getHostName()) == int:
-                return self.getHostName() == self.postfix
+            if type(httpRequest.getHostName()) == long or type(httpRequest.getHostName()) == int:
+                return httpRequest.getHostName() == self.postfix
             elif type(httpRequest.getHostName()) == str and self.is_IP_address(httpRequest.getHostName()):
-                return self.ip_str_to_int(HTTPRequest.getHostName()) == self.postfix
+                return self.ip_str_to_int(httpRequest.getHostName()) == self.postfix
             else:
                 return False
         elif self.type == LogHttpRule.WILDCARD:
@@ -1161,12 +1161,24 @@ class HTTPLogGenerator(object):
             if self.staticRulesPool.matchLogRules(httpRequest):
                 httpRequest.setLog()
                 httpRespond.setLog()
+                if type(httpRequest.getHostName()) == long or type(httpRequest.getHostName()) == int:
+                    host_name_str = self.ip_int_to_str(httpRequest.getHostName())
+                else:
+                    host_name_str = httpRequest.getHostName()
                 logEntry = "%s %s %s %s %s %s\n" % \
-                           (httpRequest.host_name, httpRequest.method, httpRequest.path, httpRequest.version, \
+                           (host_name_str, httpRequest.method, httpRequest.path, httpRequest.version, \
                             httpRespond.status_code, httpRespond.object_size)
                 self.logfileptr.flush()
                 self.logfileptr.write(logEntry)
                 self.logfileptr.flush()
+
+    def ip_int_to_str(self, ipNum):
+        ipStrList = []
+        ipStrList.append((ipNum >> 24) & 255)
+        ipStrList.append((ipNum >> 16) & 255)
+        ipStrList.append((ipNum >> 8) & 255)
+        ipStrList.append((ipNum >> 0) & 255)
+        return "%d.%d.%d.%d" % (ipStrList[0], ipStrList[1], ipStrList[2], ipStrList[3])
 
 # ===================== HTTP Header Class ==================
 class HTTPHeader(object):
@@ -1238,7 +1250,7 @@ class HTTPRequest(HTTPHeader):
         first_line_arr = first_line.split(' ')
         self.method = first_line_arr[0]
         self.path = first_line_arr[1]
-        self.version = first_line_arr[2] 
+        self.version = first_line_arr[2]
         for i in range(0, len(stream_str_arr)):
             line_arr = stream_str_arr[i].split(':')
             if line_arr[0] == 'host' and len(line_arr) == 2:

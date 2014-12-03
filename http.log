@@ -2,5 +2,7 @@ www-inst.eecs.berkeley.edu get /~cs168/fa14 http/1.1 301 254
 www-inst.eecs.berkeley.edu get /~cs168/fa14/ http/1.1 200 273
 www-inst.eecs.berkeley.edu get /~cs168/fa14/content.html http/1.1 200 1569
 www-inst.eecs.berkeley.edu get /~cs168/fa14/overview.html http/1.1 200 2581
+www-inst.eecs.berkeley.edu get /~cs168/fa14/images/book.png http/1.1 200 174
+www-inst.eecs.berkeley.edu get /~cs168/fa14/images/keycard_a.png http/1.1 200 324
 www.eecs.berkeley.edu get /includes/eecs-images/eecslogo.gif http/1.1 200 828
 www-inst.eecs.berkeley.edu get /favicon.ico http/1.1 200 0
