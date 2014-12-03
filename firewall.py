@@ -83,9 +83,6 @@ class Firewall:
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
 
-
-
-
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
         # try:
@@ -115,9 +112,10 @@ class Firewall:
             # pass
         # except Exception as e:
             # pass
-        if PRINT_ARCHIVE:
+        if PRINT_ARCHIVE and self.i + 5 > 30 and self.i + 5 < 40:
             print ("\n--> Packet NO: [%d]" % (self.i + 5))
-            print self.connectionsPool
+            # print archive
+            # print self.connectionsPool
 
     def is_http_traffic(self, archive):
         if type(archive) == TCPArchive and archive.getExternalPort() == HTTP_PORT:
@@ -1109,28 +1107,44 @@ class ConnectionEntry(object):
     def handle_normal_packet(self, archive):
         assert type(archive) == TCPArchive, "archive is not TCPArchive"
         # Update internalSeq and externalSeq
+        # if archive.getDirection() == PKT_DIR_OUTGOING:
+        #     print "Outgoing"
+        #     print  "outgoingExpect:" + str(self.outgoingExpect)
+        # else:
+        #     print "Incomming"
+        #     print "incommingExpect:" + str(self.incommingExpect)
+        # print archive.getSeqNo()
         if archive.getDirection() == PKT_DIR_OUTGOING:
             cmp_result = self.compare(archive.getSeqNo(), self.outgoingExpect)
             if cmp_result > 0:
                 archive.setVerdict(DROP)
+                # print "> Drop"
+                # print archive
             elif cmp_result == 0:
                 self.outgoingExpect = (archive.getSeqNo() + archive.getDataSize())
                 archive.setVerdict(PASS)
                 self.streamBuffer.handle_new_stream(archive)
             else:
                 archive.setVerdict(PASS)
+                # print "< Pass"
         else:
             cmp_result = self.compare(archive.getSeqNo(), self.incommingExpect)
             if cmp_result > 0:
+                # print archive
                 archive.setVerdict(DROP)
+                # print "> Drop"
             elif cmp_result == 0:
                 self.incommingExpect = archive.getSeqNo() + archive.getDataSize()
+                # print archive
                 archive.setVerdict(PASS)
                 self.streamBuffer.handle_new_stream(archive)
             else:
                 archive.setVerdict(PASS)
+                # print "< Pass"
 
     def compare(self, seqNo, expectNo):
+        if expectNo == None:
+            return 0
         if expectNo + ((2**32) / 2) > 2**32:
             wrapUpperBound = (expectNo + ((2**32)/2)) % (2**32)
             if seqNo > expectNo or (seqNo > 0 and seqNo < wrapUpperBound):
