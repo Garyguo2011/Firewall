@@ -150,7 +150,7 @@ def packet_out_of_order_test():
     for i in range (0, 103):
         pkt = getPacket(i)
         pkt_dir = getDir(i)
-        if i in [random.randint(4, 97), random.randint(4, 97), random.randint(4, 97)]:
+        if i in [random.randint(4, 97), random.randint(4, 97)]:
             # print getSeqNo(getPacket(i))
             # print ">>>>>>>>>> out of order start <<<<<<<<<<<<<<"
             for j in [i+4, i+3, i+5, i+2, i+1, i]:
