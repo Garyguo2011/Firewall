@@ -10,15 +10,6 @@ import socket
 import struct
 import time
 
-
-# Remove Latter
-#================================
-import sys
-import subprocess
-TESTCASE = True
-PRINT_ARCHIVE = False
-#================================
-
 LETTER = "abcdefghijklmnopqrstuvwxyz"
 
 
@@ -63,59 +54,34 @@ class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
-        # try:
-        if testPart12:
-            config['rule'] = 'part12_b'
-        self.staticRulesPool = StaticRulesPool(config['rule'], self.send)
-        if PRINT_ARCHIVE:
-            print(self.staticRulesPool)
-        self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
-        self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
-        self.connectionsPool = TCPConnectionsPool(self.httpLogGenerator)
-        self.i = 0
-        # except Exception:
-            # pass
-        # print(self.staticRulesPool)
-        # TODO: Load the firewall rules (from rule_filename) here.
-        # TODO: Load the GeoIP DB ('geoipdb.txt') as well.
-        # TODO: Also do some initialization if needed.
-
-    # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
-    # @pkt: the actual data of the IPv4 packet (including IP header)
+        try:
+            if testPart12:
+                config['rule'] = 'part12_b'
+            self.staticRulesPool = StaticRulesPool(config['rule'], self.send)
+            self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
+            self.httpLogGenerator = HTTPLogGenerator(HTTP_LOG_FILE, self.staticRulesPool)
+            self.connectionsPool = TCPConnectionsPool(self.httpLogGenerator)
+            self.i = 0
+        except Exception:
+            pass
 
     def handle_packet(self, pkt_dir, pkt):
-        # TODO: Your main firewall code will be here.
-        # try:
-        if pkt == None or len(pkt) == 0:
-            raise MalformError(MALFORM_PACKET + "1")
-        archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
-        # print ">>>>>>>> " + str(self.i) + " <<<<<<<<<<"
-        # print ("\n--> Packet NO: [%d]: %s" % (self.i + 5, archive.__str__()))
-        # print (archive)
-        # file_ptr = open("dir-2/" + str(self.i) + "-pkt", "w")
-        # file_ptr.write(pkt)
-        # file_ptr.close()
-        # dir_ptr = open("dir-2/" + str(self.i) + "-dir", "w")
-        # dir_ptr.write(str(pkt_dir))
-        # dir_ptr.close()
-        self.i += 1
-        if archive != None and archive.isValid():
-            self.staticRulesPool.check(archive)
-            # ++++++++++ Add for 3b ++++++++++++++++
-            if archive.getVerdict() == PASS:
-                if self.is_http_traffic(archive):
-                    self.connectionsPool.handle_TCP_packet(archive)
+        try:
+            if pkt == None or len(pkt) == 0:
+                raise MalformError(MALFORM_PACKET + "1")
+            archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
+            self.i += 1
+            if archive != None and archive.isValid():
+                self.staticRulesPool.check(archive)
                 if archive.getVerdict() == PASS:
-                    if not TESTCASE:
+                    if self.is_http_traffic(archive):
+                        self.connectionsPool.handle_TCP_packet(archive)
+                    if archive.getVerdict() == PASS:
                         self.send(pkt_dir, pkt)
-        # except MalformError as e:
-            # pass
-        # except Exception as e:
-            # pass
-        if PRINT_ARCHIVE and self.i + 5 > 30 and self.i + 5 < 40:
-            print ("\n--> Packet NO: [%d]" % (self.i + 5))
-            # print archive
-            # print self.connectionsPool
+        except MalformError as e:
+            pass
+        except Exception as e:
+            pass
 
     def is_http_traffic(self, archive):
         if type(archive) == TCPArchive and archive.getExternalPort() == HTTP_PORT:
@@ -123,16 +89,10 @@ class Firewall:
         else:
             return False
 
-    # TODO: You can add more methods as you want.
     #################### bypass_phase1.py ########################
 
     def packet_allocator(self, pkt_dir, pkt, countryCodeDict):
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # self.malformCheck(pkt_dir, pkt)
+        self.malformCheck(pkt_dir, pkt)
         protocolNumber = ord(pkt[9:10]) # parse pkt and get protocol
         if protocolNumber == TCP_PROTOCOL_NUM:
             return TCPArchive(pkt_dir, pkt, self.countryCodeDict)
@@ -144,7 +104,6 @@ class Firewall:
         elif protocolNumber == ICMP_PROTOCOL_NUM:
             return ICMPArchive(pkt_dir, pkt, self.countryCodeDict)
         else:
-            # Defualt Allow
             self.send(pkt_dir, pkt)
             return None
 
@@ -198,7 +157,6 @@ class Firewall:
 
     ################################################################
 
-# TODO: You may want to add more classes/functions as well.
 class MalformError(Exception):
     def __init__(self, value):
         self.value = value
@@ -269,7 +227,6 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             return self.ip_str_to_int(fieldList[0]), int(fieldList[1])
         else:
             pass
-            # print ("Syntax Error: " + inputStr)
 
     def ip_str_to_int(self, ipStr):
         fieldList = ipStr.split(".")
@@ -278,7 +235,6 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             return (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
         else:
             pass
-            # print ("Syntax Error: " + ipStr)
 
     def parse_port_range(self, inputStr):
         if inputStr == ANY:
@@ -290,7 +246,6 @@ class GeneralRule(Rule):        # Protocol/IP/Port Rules
             return int(fieldList[0]), int(fieldList[1])
         else:
             pass
-            # print("Syntax Error: " + inputStr)
 
     def matches (self, archive):
         if self.protocol_matches(archive) and self.external_ip_matches(archive) and \
@@ -365,7 +320,6 @@ class DNSRule(Rule):
         domainStr = fieldList[2]
         if len(domainStr) == 0:
             pass
-            # print("Parse Error: DNS Don't have domainStr")
         elif len(domainStr) == 1 and domainStr[0] == "*":
             self.isPostfix = True
             self.postfix = ""
@@ -423,7 +377,6 @@ class StaticRulesPool(object):
                         self.add(rule)
                 buf = fptr.readline()
         except IOError:
-            # print ("'%s' does not exist: use default pass" % (conffile))
             pass
 
     def parseBuffer (self, buf):
@@ -464,11 +417,9 @@ class StaticRulesPool(object):
             archive.setVerdict(PASS)
         for rule in self.rule_list:
             if rule.matches(archive):
-                # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
                 rule.handle(archive, self.send_function)
                 archive.setVerdict(rule.getVerdict())
                 return
-        # print(">>> DEFAULT_PASS")
 
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     def matchLogRules(self, httpRequest):
@@ -477,7 +428,6 @@ class StaticRulesPool(object):
 
         for logrule in self.log_rule_list:
             if logrule.matches(httpRequest):
-                # print( ">>> Match Last Rule: [" + rule.__str__() + "]")
                 return True
         return False
 
@@ -530,7 +480,6 @@ class CountryCodeDict(object):
                 self.add(fileLine)
                 fileLine = inputFile.readline()
         except IOError:
-            # print ("'%s' doesn't exist" % dataBase)
             pass
 
     def add (self, inputStr):
@@ -719,9 +668,6 @@ class UDPArchive (Archive):
         
 class ICMPArchive (Archive):
     def __init__(self, pkt_dir, pkt, countryCodeDict):
-        # Packet is String Type
-        # Need to implement UDP parsing rule
-        # ICMP has type field
         if pkt == None or len(pkt) < 1:
             raise MalformError(MALFORM_PACKET + "11")
         ipLength = (15 & ord(pkt[0:1])) * 4
@@ -956,7 +902,6 @@ class LogHttpRule(Rule):
 
     def parse_content(self, content):
         if len(content) == 0:
-            print "Pase Error: DNS Don't have content"
             pass
         elif len(content) == 1 and content[0] == "*":
             self.type = LogHttpRule.WILDCARD
@@ -979,7 +924,6 @@ class LogHttpRule(Rule):
             return (int(fieldList[0]) << 24) + (int(fieldList[1]) << 16) + (int(fieldList[2]) << 8) + int(fieldList[3])
         else:
             pass
-            # print ("Syntax Error: " + ipStr)
 
     def is_IP_address(self, content):
         for i in content:
@@ -1034,8 +978,6 @@ class TCPConnectionsPool(object):
 
     def handle_TCP_packet(self, archive):
         # assume input archive is in type of TCP Archive with external port 80
-        assert type(archive) == TCPArchive, "archive is not TCPArchive"
-
         connectionKey = (archive.getExternalIP(), archive.getInternalPort())
         # creat a new connectionEntry: Outgoing SYN
         if archive.getDirection() == PKT_DIR_OUTGOING and archive.is_SYN():
@@ -1048,8 +990,6 @@ class TCPConnectionsPool(object):
             if connectionKey in self.connectionPool:
                 connectionEntry = self.connectionPool[connectionKey]
                 connectionEntry.handle_Incomming_SYN(archive)
-            else:
-                print "SYN_ACK happen before SYN"
         # hanlde outgoing FIN or RST
         elif archive.is_FIN() or archive.is_RST():
             if connectionKey in self.connectionPool:
@@ -1065,7 +1005,6 @@ class TCPConnectionsPool(object):
         for k in self.connectionPool.keys():
             result += "-------------------------\n"
             result +=  "[ " + self.ip_int_to_str(k[0]) + ", " + str(k[1]) + " ]: " + self.connectionPool[k].__str__()
-            # result += "-------------------------\n"
         return result
 
     def ip_int_to_str(self, ipNum):
@@ -1105,42 +1044,26 @@ class ConnectionEntry(object):
                 return PASS
 
     def handle_normal_packet(self, archive):
-        assert type(archive) == TCPArchive, "archive is not TCPArchive"
-        # Update internalSeq and externalSeq
-        # if archive.getDirection() == PKT_DIR_OUTGOING:
-        #     print "Outgoing"
-        #     print  "outgoingExpect:" + str(self.outgoingExpect)
-        # else:
-        #     print "Incomming"
-        #     print "incommingExpect:" + str(self.incommingExpect)
-        # print archive.getSeqNo()
         if archive.getDirection() == PKT_DIR_OUTGOING:
             cmp_result = self.compare(archive.getSeqNo(), self.outgoingExpect)
             if cmp_result > 0:
                 archive.setVerdict(DROP)
-                # print "> Drop"
-                # print archive
             elif cmp_result == 0:
                 self.outgoingExpect = (archive.getSeqNo() + archive.getDataSize())
                 archive.setVerdict(PASS)
                 self.streamBuffer.handle_new_stream(archive)
             else:
                 archive.setVerdict(PASS)
-                # print "< Pass"
         else:
             cmp_result = self.compare(archive.getSeqNo(), self.incommingExpect)
             if cmp_result > 0:
-                # print archive
                 archive.setVerdict(DROP)
-                # print "> Drop"
             elif cmp_result == 0:
                 self.incommingExpect = archive.getSeqNo() + archive.getDataSize()
-                # print archive
                 archive.setVerdict(PASS)
                 self.streamBuffer.handle_new_stream(archive)
             else:
                 archive.setVerdict(PASS)
-                # print "< Pass"
 
     def compare(self, seqNo, expectNo):
         if expectNo == None:
@@ -1263,8 +1186,6 @@ class HTTPHeader(object):
             self.check_complete()
 
     def check_complete(self):
-        # Search entire stream see if "\r\n" has occur
-        # if so, set complete = True and call parse_stream()
         if len(self.stream) < 4:
             return
         for i in range(0, len(self.stream) - 3):
@@ -1281,10 +1202,10 @@ class HTTPHeader(object):
         for i in range(0, len(inputStream)):
             elem = chr(ord(inputStream[i:i+1]))
             result = result + elem
+        result = result.lower()
         return result.split('\r\n')
 
     def parse_stream(self):
-        # Subclass need to overide this function
         pass
 
     def isComplete(self):
@@ -1304,6 +1225,7 @@ class HTTPHeader(object):
         for i in range(0, len(self.stream)):
             elem = chr(ord(self.stream[i:i+1]))
             result = result + elem
+        result = result.lower()
         return result
 
 class HTTPRequest(HTTPHeader):
@@ -1324,7 +1246,7 @@ class HTTPRequest(HTTPHeader):
         self.version = first_line_arr[2] 
         for i in range(0, len(stream_str_arr)):
             line_arr = stream_str_arr[i].split(':')
-            if line_arr[0] == 'Host' and len(line_arr) == 2:
+            if line_arr[0] == 'host' and len(line_arr) == 2:
                 temp = line_arr[1]
                 while temp[0:1] == ' ':
                     temp = temp[1:]
@@ -1347,7 +1269,7 @@ class HTTPRespond(HTTPHeader):
         self.status_code = first_line_arr[1]
         for i in range(0, len(stream_str_arr)):
             line_arr = stream_str_arr[i].split(':')
-            if line_arr[0] == 'Content-Length' and len(line_arr) == 2:
+            if line_arr[0] == 'content-length' and len(line_arr) == 2:
                 temp = line_arr[1]
                 while temp[0:1] == ' ':
                     temp = temp[1:]
