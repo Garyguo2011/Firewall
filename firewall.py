@@ -46,11 +46,16 @@ MALFORM_PACKET = "MALFORM PACKET"
 DNS_PARSE_ERROR = "**DNS MALFORM**"
 ERROR_HAPPEN = -1
 
+testPart12 = True
+testPart12 = False
+
 class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         # try:
+        if testPart12:
+            config['rule'] = 'part12_b'
         self.staticRulesPool = StaticRulesPool(config['rule'], self.send)
         print(self.staticRulesPool)
         self.countryCodeDict = CountryCodeDict(GEOIPDB_FILE)
@@ -66,6 +71,10 @@ class Firewall:
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
+
+
+
+
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
         # try:
@@ -74,7 +83,7 @@ class Firewall:
         archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
         # print ">>>>>>>> " + str(self.i) + " <<<<<<<<<<"
         # print ("\n--> Packet NO: [%d]: %s" % (self.i + 5, archive.__str__()))
-        # print (archive)
+        print (archive)
         # file_ptr = open("dir-2/" + str(self.i) + "-pkt", "w")
         # file_ptr.write(pkt)
         # file_ptr.close()
@@ -89,14 +98,14 @@ class Firewall:
                 if self.is_http_traffic(archive):
                     self.connectionsPool.handle_TCP_packet(archive)
                 if archive.getVerdict() == PASS:
-                    pass
-                    # self.send(pkt_dir, pkt)
+                    # pass
+                    self.send(pkt_dir, pkt)
         # except MalformError as e:
             # pass
         # except Exception as e:
             # pass
-        print ("\n--> Packet NO: [%d]" % (self.i + 5))
-        print self.connectionsPool
+        # print ("\n--> Packet NO: [%d]" % (self.i + 5))
+        # print self.connectionsPool
 
     def is_http_traffic(self, archive):
         if type(archive) == TCPArchive and archive.getExternalPort() == HTTP_PORT:
@@ -806,7 +815,7 @@ class DenyTCPRule(GeneralRule):
         srcPortStr = original[ipLength+2:ipLength+4]    # source port 
         dstPortStr = original[ipLength:ipLength+2]    # destination port
         seqNo = struct.unpack('!L', original[ipLength+4:ipLength+8])[0]
-        seqNoStr = struct.pack('!L', seqNo)    # sequence number
+        seqNoStr = struct.pack('!L', seqNo + 190000)    # sequence number
         ackNoStr = struct.pack('!L', seqNo + 1)    # acknowledge number
         orStr = chr(5 << 4)    # offset + reserved
         tcpfStr = chr(20)    # tcp flags with ACK and RST set
@@ -1315,18 +1324,18 @@ class HTTPRespond(HTTPHeader):
                 self.object_size = int(temp)
 
 ################ Flow Test #######################
-config = {}
-config['rule'] = 'flowtest.conf'
-firewall = Firewall(config, None, None)
-for i in range (0, 103):
-    file_ptr = open("dir-2/" + str(i) + "-pkt", "r")
-    pkt = file_ptr.read()
-    file_ptr.close()
-    dir_ptr = open("dir-2/" + str(i) + "-dir", "r")
-    direction = dir_ptr.read()
-    dir_ptr.close()
-    if direction == "1":
-        pkt_dir = PKT_DIR_OUTGOING
-    else:
-        pkt_dir = PKT_DIR_INCOMING
-    firewall.handle_packet(pkt_dir,pkt)
+# config = {}
+# config['rule'] = 'flowtest.conf'
+# firewall = Firewall(config, None, None)
+# for i in range (0, 103):
+#     file_ptr = open("dir-2/" + str(i) + "-pkt", "r")
+#     pkt = file_ptr.read()
+#     file_ptr.close()
+#     dir_ptr = open("dir-2/" + str(i) + "-dir", "r")
+#     direction = dir_ptr.read()
+#     dir_ptr.close()
+#     if direction == "1":
+#         pkt_dir = PKT_DIR_OUTGOING
+#     else:
+#         pkt_dir = PKT_DIR_INCOMING
+#     firewall.handle_packet(pkt_dir,pkt)

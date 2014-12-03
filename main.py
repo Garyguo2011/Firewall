@@ -195,7 +195,7 @@ if __name__ == '__main__':
     sys.argv = sys.argv[1:]
     config = {}
     config['mode'] = 'firewall'
-    config['rule'] = 'rules.conf'
+    config['rule'] = 'part12_b.conf'
 
     while sys.argv:
         if len(sys.argv) < 2:
