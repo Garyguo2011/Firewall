@@ -72,8 +72,8 @@ class Firewall:
         if pkt == None or len(pkt) == 0:
             raise MalformError(MALFORM_PACKET + "1")
         archive = self.packet_allocator(pkt_dir, pkt, self.countryCodeDict)
-        print "\n>>>>>>>> " + str(self.i) + " <<<<<<<<<<\n"
-        print (archive)
+        # print ">>>>>>>> " + str(self.i) + " <<<<<<<<<<"
+        # print ("\n--> Packet NO: [%d]: %s" % (self.i + 5, archive.__str__()))
         # print (archive)
         # file_ptr = open("dir-2/" + str(self.i) + "-pkt", "w")
         # file_ptr.write(pkt)
@@ -95,6 +95,8 @@ class Firewall:
             # pass
         # except Exception as e:
             # pass
+        print ("\n--> Packet NO: [%d]" % (self.i + 5))
+        print self.connectionsPool
 
     def is_http_traffic(self, archive):
         if type(archive) == TCPArchive and archive.getExternalPort() == HTTP_PORT:
@@ -1042,6 +1044,22 @@ class TCPConnectionsPool(object):
         else:
             if connectionKey in self.connectionPool:
                 self.connectionPool[connectionKey].handle_normal_packet(archive)
+
+    def __str__(self):
+        result = "TCPConnectionsPool:\n"
+        for k in self.connectionPool.keys():
+            result += "-------------------------\n"
+            result +=  "[ " + self.ip_int_to_str(k[0]) + ", " + str(k[1]) + " ]: " + self.connectionPool[k].__str__()
+            # result += "-------------------------\n"
+        return result
+
+    def ip_int_to_str(self, ipNum):
+        ipStrList = []
+        ipStrList.append((ipNum >> 24) & 255)
+        ipStrList.append((ipNum >> 16) & 255)
+        ipStrList.append((ipNum >> 8) & 255)
+        ipStrList.append((ipNum >> 0) & 255)
+        return "%d.%d.%d.%d" % (ipStrList[0], ipStrList[1], ipStrList[2], ipStrList[3])
             
 class ConnectionEntry(object):
     def __init__(self, logGenerator):
@@ -1104,6 +1122,9 @@ class ConnectionEntry(object):
             else:
                 return -1
 
+    def __str__(self):
+        return "incommingExpect: %s | outgoingExpect: %s\n %s"  % (str(self.incommingExpect), str(self.outgoingExpect), self.streamBuffer.__str__())
+
 class TCPStreamBuffer(object):
     def __init__(self, logGenerator):
         # Element in this queue will be tuple (packet_direction, HTTP Rquest/ HTTP Respond)
@@ -1135,7 +1156,7 @@ class TCPStreamBuffer(object):
                 else:
                     if archive.getDataSize() != 0:
                         httpRequest = HTTPRequest(archive)
-                        self.queue.append(archive)
+                        self.queue.append(httpRequest)
                     else:
                         pass
         self.logGenerator.processBufferStream(self.getBuffer())
@@ -1145,6 +1166,14 @@ class TCPStreamBuffer(object):
 
     def tail(self):
         return self.queue[-1]
+
+    def __str__(self):
+        result = "TCPStreamBuffer: \n" 
+        for el in self.queue:
+            result = "**************************\n"
+            result += el.__str__() + "\n"
+        return result
+
 
 # ===================== HTTP Log Class ==================
 
@@ -1233,8 +1262,8 @@ class HTTPHeader(object):
 
     def __str__(self):
         result = ''
-        for i in range(0, len(inputStream)):
-            elem = chr(ord(inputStream[i:i+1]))
+        for i in range(0, len(self.stream)):
+            elem = chr(ord(self.stream[i:i+1]))
             result = result + elem
         return result
 
@@ -1285,7 +1314,7 @@ class HTTPRespond(HTTPHeader):
                     temp = temp[1:]
                 self.object_size = int(temp)
 
-#####Flow Test#######################
+################ Flow Test #######################
 config = {}
 config['rule'] = 'flowtest.conf'
 firewall = Firewall(config, None, None)
