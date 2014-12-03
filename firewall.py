@@ -815,7 +815,7 @@ class DenyTCPRule(GeneralRule):
         srcPortStr = original[ipLength+2:ipLength+4]    # source port 
         dstPortStr = original[ipLength:ipLength+2]    # destination port
         seqNo = struct.unpack('!L', original[ipLength+4:ipLength+8])[0]
-        seqNoStr = struct.pack('!L', seqNo + 190000)    # sequence number
+        seqNoStr = struct.pack('!L', seqNo)    # sequence number
         ackNoStr = struct.pack('!L', seqNo + 1)    # acknowledge number
         orStr = chr(5 << 4)    # offset + reserved
         tcpfStr = chr(20)    # tcp flags with ACK and RST set
