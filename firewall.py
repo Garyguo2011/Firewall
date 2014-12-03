@@ -56,11 +56,16 @@ MALFORM_PACKET = "MALFORM PACKET"
 DNS_PARSE_ERROR = "**DNS MALFORM**"
 ERROR_HAPPEN = -1
 
+testPart12 = True
+testPart12 = False
+
 class Firewall:
     def __init__(self, config, iface_int, iface_ext):
         self.iface_int = iface_int
         self.iface_ext = iface_ext
         # try:
+        if testPart12:
+            config['rule'] = 'part12_b'
         self.staticRulesPool = StaticRulesPool(config['rule'], self.send)
         if PRINT_ARCHIVE:
             print(self.staticRulesPool)
@@ -77,6 +82,10 @@ class Firewall:
 
     # @pkt_dir: either PKT_DIR_INCOMING or PKT_DIR_OUTGOING
     # @pkt: the actual data of the IPv4 packet (including IP header)
+
+
+
+
     def handle_packet(self, pkt_dir, pkt):
         # TODO: Your main firewall code will be here.
         # try:
